@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useSite } from "@/context/SiteContext";
 
 const menuLinks = [
   { href: "/", label: "Home" },
@@ -27,6 +28,8 @@ const socialLinks = [
 ];
 
 export default function Footer() {
+  const site = useSite();
+
   return (
     <footer className="overflow-hidden">
       <div className="bg-dark-bg">
@@ -36,14 +39,18 @@ export default function Footer() {
             {/* Logo & tagline */}
             <div className="lg:max-w-[300px]">
               <Link href="/">
-                <Image
-                  src="/images/frame-55.svg"
-                  alt="TaskGo"
-                  width={168}
-                  height={40}
-                  className="w-[168px] brightness-0 invert"
-                  style={{ height: "auto" }}
-                />
+                {site.logo ? (
+                  <img src={site.logo} alt={site.name} className="h-[40px] brightness-0 invert" />
+                ) : (
+                  <Image
+                    src="/images/frame-55.svg"
+                    alt={site.name}
+                    width={168}
+                    height={40}
+                    className="w-[168px] brightness-0 invert"
+                    style={{ height: "auto" }}
+                  />
+                )}
               </Link>
               <p className="text-gray text-[18px] leading-[150%] mt-6">
                 We design experiences that connect, convert, and scale with your business.
@@ -99,16 +106,16 @@ export default function Footer() {
                 <h4 className="text-white text-[24px] font-semibold mb-8">Contact</h4>
                 <div className="flex flex-col gap-5 max-w-[253px]">
                   <a
-                    href="mailto:contact@taskgo.com"
+                    href={`mailto:${site.contactEmail}`}
                     className="text-gray text-[18px] leading-[150%] hover:text-primary transition-colors duration-300"
                   >
-                    contact@taskgo.com
+                    {site.contactEmail}
                   </a>
                   <a
-                    href="tel:+18001234567"
+                    href={`tel:${site.contactPhone}`}
                     className="text-gray text-[18px] leading-[150%] hover:text-primary transition-colors duration-300"
                   >
-                    +1 (800) 123-4567
+                    {site.contactPhone}
                   </a>
                   <a
                     href="https://maps.google.com"
@@ -116,7 +123,7 @@ export default function Footer() {
                     rel="noopener noreferrer"
                     className="text-gray text-[18px] leading-[150%] hover:text-primary transition-colors duration-300"
                   >
-                    4140 Parker Rd. Allentown, New Mexico 31134
+                    {site.address}
                   </a>
                 </div>
               </div>
@@ -161,7 +168,7 @@ export default function Footer() {
               <div className="max-w-[766px] overflow-hidden">
                 <Image
                   src="/images/podr0aq2t2h4.svg"
-                  alt="TaskGo"
+                  alt={site.name}
                   width={766}
                   height={100}
                   className="w-full opacity-20"
@@ -171,11 +178,11 @@ export default function Footer() {
             </div>
 
             {/* Copyright */}
-            <div className="flex justify-center mt-8 mb-4">
+            <div className="flex justify-center mt-8 mb-4" onClick={() => window.open("https://kunalbhatia.dev", "_blank")}>
               <p className="text-gray text-[16px] leading-[150%]">
-                © Template by{" "}
-                <span className="hover:text-primary transition-colors">Olynex</span> - Powered by{" "}
-                <span className="hover:text-primary transition-colors">Webflow</span>
+                ©{" "}
+                <span className="hover:text-primary transition-colors cursor-pointer">{site.name}{" "}</span> - Powered by{" "}
+                <span className="hover:text-primary transition-colors cursor-pointer">Kunal Bhatia</span>
               </p>
             </div>
           </div>

@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { useSite } from "@/context/SiteContext";
 
 export default function Hero() {
   const sectionRef = useRef(null);
+  const site = useSite();
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -109,7 +111,7 @@ export default function Hero() {
             <div className="hero-dashboard mt-[63px] relative max-w-[1100px] mx-auto">
               <Image
                 src="/images/group-2087329893.svg"
-                alt="TaskGo Dashboard"
+                alt={`${site.name} Dashboard`}
                 width={1100}
                 height={700}
                 className="w-full relative z-[1]"

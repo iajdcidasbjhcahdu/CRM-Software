@@ -309,7 +309,7 @@ model Project {
 model Site {
   id                String  @id @default("default")
   name              String  @default("TaskGo Agency")
-  logo              String? @default("/logo.png")
+  logo              String? @default("/logo.svg")
   contactEmail      String? @default("mails.kunalbhatia@gmail.com") @map("contact_email")
   contactPhone      String? @default("+91 82848-34841") @map("contact_phone")
   address           String? @default("Chandigarh, India")

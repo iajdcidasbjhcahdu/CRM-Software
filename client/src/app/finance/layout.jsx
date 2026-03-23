@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
 import { getAuthUser } from "@/actions/auth.action";
+import { getSiteData } from "@/actions/site.action";
 import { AuthProvider } from "@/context/AuthContext";
 
-export const metadata = {
-  title: "Finance Panel — TaskGo Agency",
-};
+export async function generateMetadata() {
+  const siteData = await getSiteData();
+  const name = siteData?.name || "TaskGo Agency";
+  return { title: `Finance Panel — ${name}` };
+}
 
 export default async function FinanceLayout({ children }) {
   const user = await getAuthUser();

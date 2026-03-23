@@ -1,7 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSite } from "@/context/SiteContext";
 
 export default function LoginBranding({ siteData }) {
+  const site = useSite();
   return (
     <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
          style={{ background: "linear-gradient(135deg, #0d062d 0%, #1a1145 50%, #2a1a5e 100%)" }}>
@@ -37,7 +41,7 @@ export default function LoginBranding({ siteData }) {
           ) : (
             <Image
               src="/images/frame-9.svg"
-              alt="TaskGo"
+              alt={site.name}
               width={168}
               height={40}
               className="w-[148px] brightness-0 invert"
@@ -81,7 +85,7 @@ export default function LoginBranding({ siteData }) {
             ))}
           </div>
           <p className="text-white/80 text-[15px] leading-relaxed">
-            &ldquo;TaskGo completely transformed our agency operations. We
+            &ldquo;{site.name} completely transformed our agency operations. We
             went from juggling 5 tools to one unified platform.&rdquo;
           </p>
           <div className="flex items-center gap-3 mt-4">

@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useSite } from "@/context/SiteContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,6 +17,7 @@ const stats = [
 
 export default function WhyChoose() {
   const ref = useRef(null);
+  const site = useSite();
 
   useEffect(() => {
     const el = ref.current;
@@ -51,7 +53,7 @@ export default function WhyChoose() {
       <div className="max-w-[1350px] mx-auto px-4">
         <div className="text-center mb-[50px] max-w-[730px] mx-auto">
           <h2 className="choose-heading text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
-            Why Teams Choose TaskGo
+            Why Teams Choose {site.name?.split(" ")[0] || "TaskGo"}
           </h2>
           <p className="choose-subtext text-gray text-[18px] lg:text-[20px] leading-[150%] mt-5 max-w-[617px] mx-auto">
             Trusted by teams to manage work more efficiently. Designed to help teams do their best work.

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { getAuthUser } from "@/actions/auth.action";
-import { getSiteAPI } from "@/lib/api";
+import { getSiteData } from "@/actions/site.action";
 import LoginForm from "@/components/auth/LoginForm";
 import LoginBranding from "@/components/auth/LoginBranding";
 
@@ -18,10 +18,14 @@ const ROLE_DASHBOARD_MAP = {
   CLIENT: "/client/dashboard",
 };
 
-export const metadata = {
-  title: "Login — TaskGo Agency",
-  description: "Sign in to your TaskGo account",
-};
+export async function generateMetadata() {
+  const siteData = await getSiteData();
+  const name = siteData?.name || "TaskGo Agency";
+  return {
+    title: `Login — ${name}`,
+    description: `Sign in to your ${name} account`,
+  };
+}
 
 export default async function LoginPage() {
   // If already authenticated, redirect to their dashboard
@@ -31,14 +35,7 @@ export default async function LoginPage() {
   }
 
   // Fetch site data for branding
-  let siteData = null;
-  try {
-    const res = await getSiteAPI();
-    if (res.success) siteData = res.data;
-  } catch {
-    // Silently fall back to defaults
-  }
-
+  const siteData = await getSiteData();
   const data = siteData || {
     name: "TaskGo Agency",
     logo: null,
@@ -64,7 +61,7 @@ export default async function LoginPage() {
               ) : (
                 <Image
                   src="/images/frame-9.svg"
-                  alt="TaskGo"
+                  alt={data.name}
                   width={148}
                   height={36}
                   className="w-[148px]"

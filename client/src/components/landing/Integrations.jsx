@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useSite } from "@/context/SiteContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,6 +24,7 @@ const outerIcons = [
 
 export default function Integrations() {
   const ref = useRef(null);
+  const site = useSite();
 
   useEffect(() => {
     const el = ref.current;
@@ -65,7 +67,7 @@ export default function Integrations() {
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <Image
                 src="/images/frame-55.svg"
-                alt="TaskGo"
+                alt={site.name}
                 width={80}
                 height={80}
                 className="w-[50px] md:w-[70px] lg:w-[80px]"

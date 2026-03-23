@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSite } from "@/context/SiteContext";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -14,6 +15,7 @@ const navLinks = [
 
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const site = useSite();
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-50 pt-[30px]">
@@ -21,14 +23,18 @@ export default function Navbar() {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/">
-            <Image
-              src="/images/frame-9.svg"
-              alt="TaskGo"
-              width={168}
-              height={40}
-              className="w-[168px]"
-              style={{ height: "auto" }}
-            />
+            {site.logo ? (
+              <img src={site.logo} alt={site.name} className="h-[40px]" />
+            ) : (
+              <Image
+                src="/images/frame-9.svg"
+                alt={site.name}
+                width={168}
+                height={40}
+                className="w-[168px]"
+                style={{ height: "auto" }}
+              />
+            )}
           </Link>
 
           {/* Desktop Nav */}

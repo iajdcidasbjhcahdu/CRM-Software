@@ -1,10 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
+import { useSite } from "@/context/SiteContext";
 import { LogOut, LayoutDashboard } from "lucide-react";
 
 export default function DashboardShell({ title, children }) {
   const { user, logout } = useAuth();
+  const site = useSite();
 
   return (
     <div className="min-h-screen">
@@ -12,11 +15,15 @@ export default function DashboardShell({ title, children }) {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
         <div className="container mx-auto px-6 flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
-              <LayoutDashboard className="w-4 h-4 text-white" />
-            </div>
+            {site.logo ? (
+              <img src={site.logo} alt={site.name} className="h-8" />
+            ) : (
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                <LayoutDashboard className="w-4 h-4 text-white" />
+              </div>
+            )}
             <span className="font-bold text-slate-900 tracking-tight">
-              TaskGo
+              {site.name?.split(" ")[0] || "TaskGo"}
             </span>
             <span className="text-xs bg-indigo-50 text-indigo-600 font-semibold px-2.5 py-1 rounded-full">
               {user?.role?.replace("_", " ")}
