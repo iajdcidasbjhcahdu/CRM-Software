@@ -2,11 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useSite } from "@/context/SiteContext";
-
-gsap.registerPlugin(ScrollTrigger);
 
 const innerIcons = [
   { src: "/images/gx0l9noslpoo.svg", pos: "top-0 left-1/2 -translate-x-1/2 -translate-y-1/2" },

@@ -58,10 +58,10 @@ export default function Navbar() {
           {/* CTA Button */}
           <div className="hidden md:flex items-center gap-3">
             <Link
-              href="#CTA"
+              href="/login"
               className="btn-glow relative inline-flex items-center justify-center px-6 py-3 bg-dark text-white text-[18px] font-normal rounded-full transition-all duration-300 hover:bg-primary"
             >
-              <span className="relative z-10">Contact Us</span>
+              <span className="relative z-10">Login</span>
             </Link>
           </div>
 
@@ -103,11 +103,11 @@ export default function Navbar() {
                 </Link>
               ))}
               <Link
-                href="#CTA"
+                href="/login"
                 className="inline-flex items-center justify-center px-6 py-3 bg-dark text-white rounded-full mt-2"
                 onClick={() => setMobileOpen(false)}
               >
-                Contact Us
+                Login
               </Link>
             </div>
           </div>

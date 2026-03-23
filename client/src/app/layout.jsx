@@ -16,9 +16,14 @@ const geistMono = Geist_Mono({
 export async function generateMetadata() {
   const siteData = await getSiteData();
   const name = siteData?.name || "TaskGo Agency";
+  // favicon
+  const favicon = siteData?.logo || "/logo.svg";
   return {
     title: name,
     description: name,
+    icons: {
+      icon: favicon,
+    },
   };
 }
 

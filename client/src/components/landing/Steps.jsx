@@ -1,11 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { useState } from "react";
+import useScrollReveal from "@/hooks/useScrollReveal";
 
 const steps = [
   { num: "01", title: "Simple and Fast Setup", desc: "Sales teams powered by AI for top-notch decision-making" },
@@ -15,60 +12,30 @@ const steps = [
 
 export default function Steps() {
   const [activeStep, setActiveStep] = useState(0);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const ctx = gsap.context(() => {
-      gsap.from(".steps-heading", {
-        y: 30, opacity: 0, duration: 0.8,
-        scrollTrigger: { trigger: ".steps-heading", start: "top 85%" },
-      });
-      gsap.from(".steps-subtext", {
-        y: 25, opacity: 0, duration: 0.6, delay: 0.2,
-        scrollTrigger: { trigger: ".steps-subtext", start: "top 85%" },
-      });
-      gsap.from(".steps-image", {
-        scale: 1.5, filter: "blur(10px)", opacity: 0, duration: 1,
-        scrollTrigger: { trigger: ".steps-image", start: "top 80%" },
-      });
-      gsap.from(".steps-corner", {
-        opacity: 0, duration: 0.8, delay: 0.5,
-        scrollTrigger: { trigger: ".steps-image", start: "top 80%" },
-      });
-      gsap.from(".step-card", {
-        x: 30, opacity: 0, duration: 0.6, stagger: 0.15,
-        scrollTrigger: { trigger: ".step-cards", start: "top 80%" },
-      });
-    }, el);
-
-    return () => ctx.revert();
-  }, []);
+  const ref = useScrollReveal();
 
   return (
     <section id="Why-Choose" className="py-[70px] overflow-hidden" ref={ref}>
       <div className="max-w-[1350px] mx-auto px-4">
         <div className="text-center mb-[50px] max-w-[800px] mx-auto">
-          <h2 className="steps-heading text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
+          <h2 className="reveal text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
             Get Started in Just 3 Easy Steps
           </h2>
-          <p className="steps-subtext text-gray text-[18px] lg:text-[20px] leading-[150%] mt-5 max-w-[627px] mx-auto">
+          <p className="reveal text-gray text-[18px] lg:text-[20px] leading-[150%] mt-5 max-w-[627px] mx-auto" style={{ "--delay": "0.15s" }}>
             Get started in just 3 easy steps with a guided onboarding experience designed for speed and simplicity.
           </p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-[106px] items-center">
           {/* Left - Image */}
-          <div className="w-full lg:max-w-[629px] relative rounded-[20px] overflow-hidden">
+          <div className="reveal-scale w-full lg:max-w-[629px] relative rounded-[20px] overflow-hidden">
             <div className="relative">
               <Image
                 src="/images/rectangle-34624183.svg"
                 alt=""
                 width={600}
                 height={586}
-                className="steps-image w-full h-[400px] lg:h-[586px] object-cover rounded-[20px]"
+                className="w-full h-[400px] lg:h-[586px] object-cover rounded-[20px]"
               />
               <div className="absolute inset-0">
                 <Image
@@ -76,24 +43,25 @@ export default function Steps() {
                   alt="Steps preview"
                   width={2004}
                   height={1200}
-                  className="steps-corner w-full h-full object-cover rounded-[20px]"
+                  className="w-full h-full object-cover rounded-[20px]"
                 />
               </div>
             </div>
           </div>
 
           {/* Right - Steps Tabs */}
-          <div className="step-cards flex-1 w-full">
+          <div className="flex-1 w-full">
             <div className="flex flex-col gap-0">
               {steps.map((step, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveStep(idx)}
-                  className={`step-card text-left rounded-[20px] p-[30px] pb-0 transition-all duration-300 relative overflow-hidden border ${
+                  className={`reveal-right text-left rounded-[20px] p-[30px] pb-0 transition-all duration-300 relative overflow-hidden border ${
                     activeStep === idx
                       ? "bg-light-gray border-border-1"
                       : "bg-white border-transparent hover:border-border-1"
                   }`}
+                  style={{ "--delay": `${0.1 + idx * 0.12}s` }}
                 >
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center text-[16px] font-semibold">
@@ -123,7 +91,7 @@ export default function Steps() {
 
                   {activeStep === idx && (
                     <Image
-                      src="/images/mask-group-4.png"
+                      src="/images/mask-group-4.webp"
                       alt=""
                       width={1881}
                       height={400}

@@ -5,7 +5,7 @@ import Features from "@/components/landing/Features";
 import WhyChoose from "@/components/landing/WhyChoose";
 import Steps from "@/components/landing/Steps";
 import Testimonials from "@/components/landing/Testimonials";
-import Pricing from "@/components/landing/Pricing";
+// import Pricing from "@/components/landing/Pricing";
 import Integrations from "@/components/landing/Integrations";
 import FAQ from "@/components/landing/FAQ";
 import CTA from "@/components/landing/CTA";
@@ -21,7 +21,7 @@ export default function Home() {
       <WhyChoose />
       <Steps />
       <Testimonials />
-      <Pricing />
+      {/* <Pricing /> */}
       <Integrations />
       <FAQ />
       <CTA />

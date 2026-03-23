@@ -2,11 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { useState } from "react";
+import useScrollReveal from "@/hooks/useScrollReveal";
 
 const features = [
   "Access to core features",
@@ -32,31 +29,7 @@ const plans = {
 
 export default function Pricing() {
   const [billing, setBilling] = useState("monthly");
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const ctx = gsap.context(() => {
-      gsap.from(".pricing-heading", {
-        y: 30, opacity: 0, duration: 0.8,
-        scrollTrigger: { trigger: ".pricing-heading", start: "top 85%" },
-      });
-      gsap.from(".pricing-subtext", {
-        y: 25, opacity: 0, duration: 0.6, delay: 0.2,
-        scrollTrigger: { trigger: ".pricing-subtext", start: "top 85%" },
-      });
-      gsap.from(".pricing-toggle", {
-        y: 25, opacity: 0, duration: 0.5,
-        scrollTrigger: { trigger: ".pricing-toggle", start: "top 85%" },
-      });
-      gsap.from(".pricing-card", {
-        y: 40, opacity: 0, duration: 0.7, stagger: 0.2,
-        scrollTrigger: { trigger: ".pricing-grid", start: "top 80%" },
-      });
-    }, el);
-    return () => ctx.revert();
-  }, []);
+  const ref = useScrollReveal();
 
   const currentPlans = plans[billing];
 
@@ -65,16 +38,16 @@ export default function Pricing() {
       <div className="max-w-[1350px] mx-auto px-4">
         {/* Heading */}
         <div className="text-center mb-12">
-          <h2 className="pricing-heading text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
+          <h2 className="reveal text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
             Flexible Pricing For Every Team
           </h2>
-          <p className="pricing-subtext text-gray text-[18px] lg:text-[20px] leading-[150%] mt-4 max-w-[660px] mx-auto">
+          <p className="reveal text-gray text-[18px] lg:text-[20px] leading-[150%] mt-4 max-w-[660px] mx-auto" style={{ "--delay": "0.15s" }}>
             Choose a plan that fits your needs—whether you&apos;re just getting started or managing complex projects at scale.
           </p>
         </div>
 
         {/* Toggle */}
-        <div className="pricing-toggle flex justify-center mb-10">
+        <div className="reveal flex justify-center mb-10" style={{ "--delay": "0.2s" }}>
           <div className="inline-flex bg-light-gray rounded-full p-1 border border-border-1">
             <button
               onClick={() => setBilling("monthly")}
@@ -100,11 +73,12 @@ export default function Pricing() {
         </div>
 
         {/* Cards */}
-        <div className="pricing-grid grid grid-cols-1 md:grid-cols-2 gap-[30px] max-w-[900px] mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-[30px] max-w-[900px] mx-auto">
           {currentPlans.map((plan, idx) => (
             <div
               key={`${billing}-${idx}`}
-              className="pricing-card bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden flex flex-col"
+              className="reveal bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden flex flex-col"
+              style={{ "--delay": `${0.25 + idx * 0.15}s` }}
             >
               {/* Plan Title */}
               <div className="flex items-center justify-between mb-4">

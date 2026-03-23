@@ -1,11 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import { useState } from "react";
+import useScrollReveal from "@/hooks/useScrollReveal";
 
 const testimonials = [
   {
@@ -95,52 +92,30 @@ function Stars() {
 
 export default function Testimonials() {
   const [activeSlide, setActiveSlide] = useState(0);
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const ctx = gsap.context(() => {
-      gsap.from(".testimonial-heading", {
-        y: 30, opacity: 0, duration: 0.8,
-        scrollTrigger: { trigger: ".testimonial-heading", start: "top 85%" },
-      });
-      gsap.from(".testimonial-subtext", {
-        y: 25, opacity: 0, duration: 0.6, delay: 0.2,
-        scrollTrigger: { trigger: ".testimonial-subtext", start: "top 85%" },
-      });
-      gsap.from(".testimonial-card", {
-        y: 40, opacity: 0, duration: 0.7, stagger: 0.12,
-        scrollTrigger: { trigger: ".testimonial-grid", start: "top 80%" },
-      });
-    }, el);
-
-    return () => ctx.revert();
-  }, []);
+  const ref = useScrollReveal();
 
   return (
     <section id="Testimonial" className="py-[70px] overflow-hidden" ref={ref}>
       <div className="max-w-[1350px] mx-auto px-4">
         {/* Heading */}
         <div className="text-center mb-12">
-          <h2 className="testimonial-heading text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
+          <h2 className="reveal text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
             Real Results, Real Impact.
             <br />
             Our Success Stories
           </h2>
-          <p className="testimonial-subtext text-gray text-[18px] lg:text-[20px] leading-[150%] mt-4 max-w-[542px] mx-auto">
+          <p className="reveal text-gray text-[18px] lg:text-[20px] leading-[150%] mt-4 max-w-[542px] mx-auto" style={{ "--delay": "0.15s" }}>
             Real-world success stories showcasing growth, performance, and productivity improvements.
           </p>
         </div>
 
         {/* Desktop Layout - bento grid */}
-        <div className="testimonial-grid hidden lg:block">
+        <div className="hidden lg:block">
           <div className="grid grid-cols-3 gap-[30px]">
             {/* Column 1: large card + small card */}
             <div className="flex flex-col gap-[30px]">
               {/* Large testimonial */}
-              <div className="testimonial-card bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden flex-1">
+              <div className="reveal bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden flex-1" style={{ "--delay": "0.1s" }}>
                 <p className="text-gray text-[16px] leading-[150%] mb-6">
                   {testimonials[0].text}
                 </p>
@@ -156,7 +131,7 @@ export default function Testimonials() {
                 </div>
               </div>
               {/* Small card */}
-              <div className="testimonial-card bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden">
+              <div className="reveal bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden" style={{ "--delay": "0.2s" }}>
                 <p className="text-gray text-[16px] leading-[150%] mb-4">
                   {testimonials[1].text}
                 </p>
@@ -176,7 +151,7 @@ export default function Testimonials() {
 
             {/* Column 2: client image + small card */}
             <div className="flex flex-col gap-[30px]">
-              <div className="testimonial-card bg-light-gray border border-border-1 rounded-[20px] p-8 flex items-center justify-center flex-1">
+              <div className="reveal bg-light-gray border border-border-1 rounded-[20px] p-8 flex items-center justify-center flex-1" style={{ "--delay": "0.15s" }}>
                 <Image
                   src="/images/mask-group.svg"
                   alt="Client"
@@ -185,7 +160,7 @@ export default function Testimonials() {
                   className="w-full max-w-[250px]"
                 />
               </div>
-              <div className="testimonial-card bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden">
+              <div className="reveal bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden" style={{ "--delay": "0.25s" }}>
                 <p className="text-gray text-[16px] leading-[150%] mb-4">
                   {testimonials[2].text}
                 </p>
@@ -205,7 +180,7 @@ export default function Testimonials() {
 
             {/* Column 3: client image + big review */}
             <div className="flex flex-col gap-[30px]">
-              <div className="testimonial-card bg-light-gray border border-border-1 rounded-[20px] p-8 flex items-center justify-center">
+              <div className="reveal bg-light-gray border border-border-1 rounded-[20px] p-8 flex items-center justify-center" style={{ "--delay": "0.2s" }}>
                 <Image
                   src="/images/mask-group-1.svg"
                   alt="Client"
@@ -214,7 +189,7 @@ export default function Testimonials() {
                   className="w-full max-w-[250px]"
                 />
               </div>
-              <div className="testimonial-card bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden flex-1">
+              <div className="reveal bg-light-gray border border-border-1 rounded-[20px] p-[30px] relative overflow-hidden flex-1" style={{ "--delay": "0.3s" }}>
                 <p className="text-gray text-[16px] leading-[150%] mb-6">
                   {testimonials[3].text}
                 </p>

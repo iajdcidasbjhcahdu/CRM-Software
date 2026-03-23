@@ -1,81 +1,34 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
-gsap.registerPlugin(ScrollTrigger);
+import useScrollReveal from "@/hooks/useScrollReveal";
 
 export default function Features() {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const ctx = gsap.context(() => {
-      // Animate heading
-      gsap.from(".features-heading", {
-        y: 30,
-        opacity: 0,
-        duration: 0.8,
-        scrollTrigger: {
-          trigger: ".features-heading",
-          start: "top 85%",
-        },
-      });
-
-      gsap.from(".features-subtext", {
-        y: 25,
-        opacity: 0,
-        duration: 0.6,
-        delay: 0.2,
-        scrollTrigger: {
-          trigger: ".features-subtext",
-          start: "top 85%",
-        },
-      });
-
-      // Stagger feature cards
-      gsap.from(".feature-card", {
-        y: 40,
-        opacity: 0,
-        duration: 0.7,
-        stagger: 0.15,
-        scrollTrigger: {
-          trigger: ".feature-grid",
-          start: "top 80%",
-        },
-      });
-    }, el);
-
-    return () => ctx.revert();
-  }, []);
+  const ref = useScrollReveal();
 
   return (
     <section id="Features" className="py-[70px] overflow-hidden" ref={ref}>
       <div className="max-w-[1350px] mx-auto px-4">
         {/* Heading */}
         <div className="text-center mb-[50px] max-w-[730px] mx-auto">
-          <h2 className="features-heading text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
+          <h2 className="reveal text-[36px] md:text-[44px] lg:text-[54px] font-semibold leading-[120%] tracking-[-1.08px] text-dark">
             Unlock Premium Benefits With
             <br />
             Our Advanced Features.
           </h2>
-          <p className="features-subtext text-gray text-[18px] lg:text-[20px] leading-[150%] mt-5 max-w-[488px] mx-auto">
+          <p className="reveal text-gray text-[18px] lg:text-[20px] leading-[150%] mt-5 max-w-[488px] mx-auto" style={{ "--delay": "0.15s" }}>
             Unlock premium benefits with advanced features designed to scale.
           </p>
         </div>
 
         {/* Feature Grid: left column (2/3) + right column (1/3) */}
-        <div className="feature-grid grid grid-cols-1 lg:grid-cols-[1fr_0.5fr] gap-[30px]">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_0.5fr] gap-[30px]">
           {/* LEFT COLUMN */}
           <div className="flex flex-col gap-[30px]">
             {/* Top Row: 2 cards side by side */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-[30px]">
               {/* Smart Task Organization */}
-              <div className="feature-card bg-light-gray rounded-[20px] p-6 pb-0 overflow-hidden flex flex-col">
+              <div className="reveal bg-light-gray rounded-[20px] p-6 pb-0 overflow-hidden flex flex-col" style={{ "--delay": "0.1s" }}>
                 <div className="flex-none mb-4">
                   <h3 className="text-[20px] lg:text-[24px] font-semibold leading-[120%] tracking-[-0.48px] text-dark mb-2">
                     Smart Task Organization
@@ -96,7 +49,7 @@ export default function Features() {
               </div>
 
               {/* Automated Workflows */}
-              <div className="feature-card bg-light-gray rounded-[20px] p-6 pb-0 overflow-hidden flex flex-col">
+              <div className="reveal bg-light-gray rounded-[20px] p-6 pb-0 overflow-hidden flex flex-col" style={{ "--delay": "0.2s" }}>
                 <div className="flex-none mb-4">
                   <h3 className="text-[20px] lg:text-[24px] font-semibold leading-[120%] tracking-[-0.48px] text-dark mb-2">
                     Automated Workflows
@@ -118,8 +71,8 @@ export default function Features() {
             </div>
 
             {/* Bottom: Real-Time Progress Tracking (full width of left column) */}
-            <div className="feature-card bg-light-gray rounded-[20px] p-[30px] overflow-hidden relative flex flex-col sm:flex-row gap-6">
-              <div className="sm:w-[40%] flex flex-col justify-center z-[1]">
+            <div className="reveal bg-light-gray rounded-[20px] p-[30px] overflow-hidden relative flex flex-col sm:flex-row gap-6" style={{ "--delay": "0.3s" }}>
+              <div className="sm:w-[50%] flex flex-col justify-center z-[1]">
                 <h3 className="text-[20px] lg:text-[24px] font-semibold leading-[120%] tracking-[-0.48px] text-dark mb-2">
                   Real-Time Progress Tracking
                 </h3>
@@ -132,15 +85,14 @@ export default function Features() {
                   <Image
                     src="/images/mask-group-3.svg"
                     alt="Progress Tracking"
-                    width={600}
+                    width={300}
                     height={300}
-                    className="w-full"
                   />
                 </div>
               </div>
               <Image
                 src="/images/mask-group-1.png"
-                alt=""
+                alt="Progress Tracking"
                 width={1257}
                 height={400}
                 className="absolute bottom-0 left-0 w-full pointer-events-none opacity-30"
@@ -149,7 +101,7 @@ export default function Features() {
           </div>
 
           {/* RIGHT COLUMN: File & Comment Management (tall card spanning full height) */}
-          <div className="feature-card bg-light-gray rounded-[20px] p-6 overflow-hidden relative flex flex-col">
+          <div className="reveal bg-light-gray rounded-[20px] p-6 overflow-hidden relative flex flex-col" style={{ "--delay": "0.25s" }}>
             <div className="flex-none mb-6 z-[1]">
               <h3 className="text-[20px] lg:text-[24px] font-semibold leading-[120%] tracking-[-0.48px] text-dark mb-2">
                 File &amp; Comment Management
