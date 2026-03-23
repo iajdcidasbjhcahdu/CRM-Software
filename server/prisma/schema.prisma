@@ -1,0 +1,341 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Role {
+  OWNER
+  ADMIN
+  SALES_MANAGER
+  ACCOUNT_MANAGER
+  FINANCE_MANAGER
+  HR
+  EMPLOYEE
+  CLIENT
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  INVITED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+  LOST
+}
+
+enum LeadSource {
+  WEBSITE
+  REFERRAL
+  SOCIAL_MEDIA
+  COLD_CALL
+  EMAIL_CAMPAIGN
+  ADVERTISEMENT
+  EVENT
+  PARTNER
+  OTHER
+}
+
+enum LeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum DealStage {
+  DISCOVERY
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  CHURNED
+}
+
+enum ProjectStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+// ─── User Model ──────────────────────────────────────────
+
+model User {
+  id              String     @id @default(cuid())
+  email           String     @unique
+  password        String
+  firstName       String     @map("first_name")
+  lastName        String     @map("last_name")
+  phone           String?
+  avatar          String?
+  role            Role       @default(EMPLOYEE)
+  status          UserStatus @default(ACTIVE)
+  isEmailVerified Boolean    @default(false) @map("is_email_verified")
+  lastLoginAt     DateTime?  @map("last_login_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // Refresh tokens
+  refreshTokens RefreshToken[]
+
+  // Audit trail
+  auditLogs AuditLog[] @relation("AuditUser")
+
+  // Leads
+  assignedLeads Lead[] @relation("LeadAssignee")
+  createdLeads  Lead[] @relation("LeadCreator")
+
+  // Deals
+  assignedDeals Deal[] @relation("DealAssignee")
+  createdDeals  Deal[] @relation("DealCreator")
+
+  // Clients
+  managedClients Client[] @relation("ClientAccountManager")
+
+  // Projects
+  managedProjects Project[] @relation("ProjectAccountManager")
+  createdProjects Project[] @relation("ProjectCreator")
+
+  @@map("users")
+}
+
+// ─── Refresh Token ───────────────────────────────────────
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+  @@map("refresh_tokens")
+}
+
+// ─── Audit Log ───────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  action    String
+  entity    String
+  entityId  String?  @map("entity_id")
+  metadata  Json?
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation("AuditUser", fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ─── Lead ────────────────────────────────────────────────
+
+model Lead {
+  id            String       @id @default(cuid())
+  companyName   String       @map("company_name")
+  contactName   String       @map("contact_name")
+  email         String?
+  phone         String?
+  source        LeadSource   @default(OTHER)
+  status        LeadStatus   @default(NEW)
+  priority      LeadPriority @default(MEDIUM)
+  estimatedValue Decimal?    @map("estimated_value") @db.Decimal(12, 2)
+  notes         String?
+  lostReason    String?      @map("lost_reason")
+
+  // Assigned sales person
+  assigneeId    String?      @map("assignee_id")
+  assignee      User?        @relation("LeadAssignee", fields: [assigneeId], references: [id])
+
+  // Who created this lead
+  createdById   String       @map("created_by_id")
+  createdBy     User         @relation("LeadCreator", fields: [createdById], references: [id])
+
+  // Converted deal
+  deal Deal?
+
+  // Duplicate prevention
+  @@unique([email, companyName], map: "leads_email_company_unique")
+
+  followUpAt    DateTime?    @map("follow_up_at")
+  convertedAt   DateTime?    @map("converted_at")
+  createdAt     DateTime     @default(now()) @map("created_at")
+  updatedAt     DateTime     @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([assigneeId])
+  @@index([source])
+  @@index([createdAt])
+  @@map("leads")
+}
+
+// ─── Deal ────────────────────────────────────────────────
+
+model Deal {
+  id              String    @id @default(cuid())
+  title           String
+  value           Decimal?  @db.Decimal(12, 2)
+  stage           DealStage @default(DISCOVERY)
+  expectedCloseAt DateTime? @map("expected_close_at")
+  lostReason      String?   @map("lost_reason")
+  notes           String?
+
+  // Source lead
+  leadId          String    @unique @map("lead_id")
+  lead            Lead      @relation(fields: [leadId], references: [id])
+
+  // Assigned sales person
+  assigneeId      String?   @map("assignee_id")
+  assignee        User?     @relation("DealAssignee", fields: [assigneeId], references: [id])
+
+  // Who created this deal
+  createdById     String    @map("created_by_id")
+  createdBy       User      @relation("DealCreator", fields: [createdById], references: [id])
+
+  // Converted client + project
+  client          Client?
+  project         Project?
+
+  wonAt           DateTime? @map("won_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@index([stage])
+  @@index([assigneeId])
+  @@index([createdAt])
+  @@map("deals")
+}
+
+// ─── Client ──────────────────────────────────────────────
+
+model Client {
+  id              String       @id @default(cuid())
+  companyName     String       @map("company_name")
+  contactName     String       @map("contact_name")
+  email           String?      @unique
+  phone           String?
+  address         String?
+  industry        String?
+  website         String?
+  logo            String?
+  status          ClientStatus @default(ACTIVE)
+  notes           String?
+
+  // Source deal
+  dealId          String?      @unique @map("deal_id")
+  deal            Deal?        @relation(fields: [dealId], references: [id])
+
+  // Account manager
+  accountManagerId String?     @map("account_manager_id")
+  accountManager   User?       @relation("ClientAccountManager", fields: [accountManagerId], references: [id])
+
+  // Projects under this client
+  projects        Project[]
+
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([accountManagerId])
+  @@map("clients")
+}
+
+// ─── Project ─────────────────────────────────────────────
+
+model Project {
+  id              String        @id @default(cuid())
+  name            String
+  description     String?
+  status          ProjectStatus @default(NOT_STARTED)
+  startDate       DateTime?     @map("start_date")
+  endDate         DateTime?     @map("end_date")
+  budget          Decimal?      @db.Decimal(12, 2)
+  notes           String?
+
+  // Parent client
+  clientId        String        @map("client_id")
+  client          Client        @relation(fields: [clientId], references: [id])
+
+  // Source deal (optional — projects can be created manually too)
+  dealId          String?       @unique @map("deal_id")
+  deal            Deal?         @relation(fields: [dealId], references: [id])
+
+  // Account manager for this project
+  accountManagerId String?      @map("account_manager_id")
+  accountManager   User?        @relation("ProjectAccountManager", fields: [accountManagerId], references: [id])
+
+  // Creator
+  createdById     String        @map("created_by_id")
+  createdBy       User          @relation("ProjectCreator", fields: [createdById], references: [id])
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@index([clientId])
+  @@index([status])
+  @@index([accountManagerId])
+  @@index([createdAt])
+  @@map("projects")
+}
+
+// ─── Site Configuration ──────────────────────────────────
+// Single-row table — only one record (id = "default")
+
+model Site {
+  id                String  @id @default("default")
+  name              String  @default("OmniCore Agency Suite")
+  logo              String?
+  contactEmail      String? @map("contact_email")
+  contactPhone      String? @map("contact_phone")
+  address           String?
+  isMaintenanceMode Boolean @default(false) @map("is_maintenance_mode")
+  isDemoMode        Boolean @default(false) @map("is_demo_mode")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  @@map("site")
+}
+
+// ─── Settings ────────────────────────────────────────────
+// Single-row table for system-wide settings
+
+model Settings {
+  id              String  @id @default("default")
+
+  // SMTP Configuration
+  smtpHost        String? @map("smtp_host")
+  smtpPort        Int?    @map("smtp_port")
+  smtpEmail       String? @map("smtp_email")
+  smtpPassword    String? @map("smtp_password")
+  smtpIsSecure    Boolean @default(true) @map("smtp_is_secure")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
