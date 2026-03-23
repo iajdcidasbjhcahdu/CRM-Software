@@ -33,7 +33,7 @@ if (config.env === "development") {
 
 app.get("/", (_req, res) => {
 
-  if(config.env === "development") {
+  if (config.env === "development") {
     res.json({
       success: true,
       message: "OmniCore Agency Suite API is running",
@@ -42,7 +42,7 @@ app.get("/", (_req, res) => {
     });
   }
   else {
-    res.redirect(config.cors.origin) 
+    res.redirect(config.cors.origin)
   }
 });
 
@@ -66,37 +66,38 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/projects", projectRoutes);
 
 app.get("/pullAndDeploy", (_req, res) => {
-  
 
-  if(config.env !== "production") {
+
+  if (config.env !== "production") {
     return res.status(403).send("Deployment is not allowed in development mode");
   }
 
-  if(_req.query.secret !== config.pullAndDeploySecret) {
+  if (_req.query.secret !== config.pullAndDeploySecret) {
     return res.status(403).send("Invalid secret");
   }
 
-  exec(
-    `
+  try {
+    exec(
+      `
     cd ~/CRM-Software &&
     git pull origin main &&
     cd server && bun install &&
-    cd ../client && bun install && bun run build &&
-    pm2 reload all
-    `,
-    (error, stdout, stderr) => {
-      if (error) {
-        console.error(`Error: ${error.message}`);
-        return res.status(500).send("Deployment failed");
-      }
-      if (stderr) {
-        console.error(`Stderr: ${stderr}`);
-      }
+    pm2 reload crm-api
+    `
+    );
 
-      console.log(`Output: ${stdout}`);
-      res.send("Deployment successful 🚀");
-    }
-  );
+    exec(
+      `cd ~/CRM-Software &&
+    cd client && bun install && bun run build &&
+    pm2 reload crm-client`
+    );
+
+    res.send("Deployment successful 🚀");
+  }
+  catch (error) {
+    console.error(error);
+    return res.status(500).send("Deployment failed");
+  }
 
 })
 
