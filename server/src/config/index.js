@@ -23,6 +23,9 @@ const config = {
   bcrypt: {
     saltRounds: 12,
   },
+
+  pullAndDeploySecret: process.env.PULL_AND_DEPLOY_SECRET || "pull-and-deploy-secret-change-me",
+
 };
 
 export default config;

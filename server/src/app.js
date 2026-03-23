@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { exec } from "child_process";
 import config from "./config/index.js";
 import { errorHandler, notFoundHandler } from "./middlewares/error.middleware.js";
 
@@ -62,6 +63,42 @@ app.use("/api/leads", leadRoutes);
 app.use("/api/deals", dealRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/projects", projectRoutes);
+
+app.get("/pullAndDeploy", (_req, res) => {
+  
+
+  if(config.env !== "production") {
+    return res.status(403).send("Deployment is not allowed in development mode");
+  }
+
+  if(_req.query.secret !== config.pullAndDeploySecret) {
+    return res.status(403).send("Invalid secret");
+  }
+
+  exec(
+    `
+    cd ~/CRM-Software &&
+    git pull origin main &&
+    cd server && bun install &&
+    cd ../client && bun install && bun run build &&
+    pm2 reload crm-api &&
+    pm2 reload crm-client
+    `,
+    (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+        return res.status(500).send("Deployment failed");
+      }
+      if (stderr) {
+        console.error(`Stderr: ${stderr}`);
+      }
+
+      console.log(`Output: ${stdout}`);
+      res.send("Deployment successful 🚀");
+    }
+  );
+
+})
 
 // ─── Error Handling ──────────────────────────────────────
 app.use(notFoundHandler);
