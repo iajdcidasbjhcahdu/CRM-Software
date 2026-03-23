@@ -77,19 +77,20 @@ app.get("/pullAndDeploy", (_req, res) => {
   }
 
   try {
-    exec(
-      `
-    cd ~/CRM-Software &&
-    git pull origin main &&
-    cd server && bun install &&
-    pm2 reload crm-api
-    `
-    );
 
     exec(
       `cd ~/CRM-Software &&
+    git pull origin main &&
     cd client && bun install && bun run build &&
     pm2 reload crm-client`
+    );
+
+    exec(
+      `
+    cd ~/CRM-Software &&
+    cd server && bun install &&
+    pm2 reload crm-api
+    `
     );
 
     res.send("Deployment successful 🚀");
