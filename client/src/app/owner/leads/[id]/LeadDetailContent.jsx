@@ -1,0 +1,480 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import {
+  Pencil,
+  Mail,
+  Phone,
+  Calendar,
+  Clock,
+  Building2,
+  User,
+  Target,
+  DollarSign,
+  FileText,
+  ArrowRight,
+  AlertCircle,
+  CalendarClock,
+  UserCheck,
+  Sparkles,
+  XCircle,
+  CheckCircle2,
+  ChevronRight,
+} from "lucide-react";
+
+import { updateLeadStatus } from "@/actions/leads.action";
+import { useSite } from "@/context/SiteContext";
+import PageHeader from "@/components/ui/PageHeader";
+import Badge from "@/components/ui/Badge";
+import Toast from "@/components/ui/Toast";
+
+/* ─── Status flow config ─── */
+const STATUS_TRANSITIONS = {
+  NEW: ["CONTACTED", "QUALIFIED", "UNQUALIFIED", "LOST"],
+  CONTACTED: ["QUALIFIED", "UNQUALIFIED", "LOST"],
+  QUALIFIED: ["CONVERTED", "LOST"],
+  UNQUALIFIED: ["NEW", "CONTACTED", "LOST"],
+  CONVERTED: [],
+  LOST: ["NEW"],
+};
+
+const STATUS_COLORS = {
+  NEW: "from-blue-500 to-indigo-600",
+  CONTACTED: "from-sky-500 to-blue-600",
+  QUALIFIED: "from-emerald-500 to-green-600",
+  UNQUALIFIED: "from-amber-500 to-orange-600",
+  CONVERTED: "from-green-500 to-emerald-600",
+  LOST: "from-red-500 to-rose-600",
+};
+
+const STATUS_ICONS = {
+  NEW: Sparkles,
+  CONTACTED: Phone,
+  QUALIFIED: CheckCircle2,
+  UNQUALIFIED: AlertCircle,
+  CONVERTED: Target,
+  LOST: XCircle,
+};
+
+/* ─── Status Pipeline Steps ─── */
+const PIPELINE_STEPS = ["NEW", "CONTACTED", "QUALIFIED", "CONVERTED"];
+
+function getStepIndex(status) {
+  if (status === "LOST" || status === "UNQUALIFIED") return -1;
+  return PIPELINE_STEPS.indexOf(status);
+}
+
+export default function LeadDetailContent({ initialLead }) {
+  const { format, formatCompact } = useSite();
+  const [lead, setLead] = useState(initialLead);
+  const [isPending, startTransition] = useTransition();
+  const [toast, setToast] = useState(null);
+  const [lostReasonInput, setLostReasonInput] = useState("");
+  const [showLostModal, setShowLostModal] = useState(false);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    if (newStatus === "LOST") {
+      setShowLostModal(true);
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await updateLeadStatus(lead.id, newStatus);
+      if (result.success) {
+        setLead(result.data);
+        showToast("success", `Lead status updated to ${newStatus}`);
+      } else {
+        showToast("error", result.error || "Failed to update status");
+      }
+    });
+  };
+
+  const handleLostConfirm = () => {
+    if (!lostReasonInput.trim()) {
+      showToast("error", "Please provide a reason for marking this lead as lost");
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await updateLeadStatus(lead.id, "LOST", lostReasonInput.trim());
+      if (result.success) {
+        setLead(result.data);
+        setShowLostModal(false);
+        setLostReasonInput("");
+        showToast("success", "Lead marked as lost");
+      } else {
+        showToast("error", result.error || "Failed to update status");
+      }
+    });
+  };
+
+  const allowedTransitions = STATUS_TRANSITIONS[lead.status] || [];
+  const StatusIcon = STATUS_ICONS[lead.status] || Target;
+  const currentStepIdx = getStepIndex(lead.status);
+
+  const createdDate = lead.createdAt
+    ? new Date(lead.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+    : "—";
+
+  const followUpDate = lead.followUpAt
+    ? new Date(lead.followUpAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+
+  const convertedDate = lead.convertedAt
+    ? new Date(lead.convertedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })
+    : null;
+
+  return (
+    <div className="flex flex-col gap-6 w-full">
+      {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
+
+      <PageHeader
+        title="Lead Details"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/owner/dashboard" },
+          { label: "Leads", href: "/owner/leads" },
+          { label: lead.companyName },
+        ]}
+        actions={
+          <Link
+            href={`/owner/leads/${lead.id}/edit`}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#5542F6] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-[#4636d4] transition-all"
+          >
+            <Pencil className="w-4 h-4" />
+            Edit Lead
+          </Link>
+        }
+      />
+
+      {/* ═══ Profile Header Card ═══ */}
+      <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm shadow-slate-200/50 overflow-hidden">
+        {/* Gradient Banner */}
+        <div className={`h-28 bg-gradient-to-r ${STATUS_COLORS[lead.status] || "from-slate-500 to-gray-600"} relative`}>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djItSDI0di0yaDEyem0wLTRWMjhIMjR2Mmgxem0tMTIgMHYtMkgxMnYyaDEyeiIvPjwvZz48L2c+PC9zdmc+')] opacity-30" />
+        </div>
+
+        <div className="px-8 pb-8 -mt-12 relative">
+          <div className="flex flex-col md:flex-row gap-6 items-start">
+            {/* Icon */}
+            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-white to-slate-50 border-4 border-white shadow-xl flex items-center justify-center">
+              <StatusIcon className="w-10 h-10 text-slate-600" />
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 pt-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-3 mb-2">
+                <h2 className="text-2xl font-bold text-slate-900">{lead.companyName}</h2>
+                <div className="flex items-center gap-2">
+                  <Badge value={lead.status} />
+                  <Badge value={lead.priority} />
+                  <Badge value={lead.source} />
+                </div>
+              </div>
+              <p className="text-sm text-slate-500 mb-4">
+                Contact: <span className="font-medium text-slate-700">{lead.contactName}</span>
+              </p>
+
+              <div className="flex flex-wrap gap-6 text-sm text-slate-600">
+                {lead.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-slate-400" />
+                    <a href={`mailto:${lead.email}`} className="hover:text-indigo-600 transition-colors">
+                      {lead.email}
+                    </a>
+                  </div>
+                )}
+                {lead.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-slate-400" />
+                    {lead.phone}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-slate-400" />
+                  Created {createdDate}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Pipeline Progress ═══ */}
+      <div className="bg-white rounded-[24px] p-6 lg:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
+        <h3 className="text-lg font-bold text-slate-900 mb-6">Pipeline Progress</h3>
+        <div className="flex items-center gap-0">
+          {PIPELINE_STEPS.map((step, idx) => {
+            const isActive = currentStepIdx >= idx;
+            const isCurrent = lead.status === step;
+            return (
+              <div key={step} className="flex items-center flex-1">
+                <div className="flex flex-col items-center flex-1">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      isCurrent
+                        ? "bg-[#5542F6] text-white shadow-lg shadow-indigo-500/30 ring-4 ring-indigo-500/10"
+                        : isActive
+                          ? "bg-emerald-500 text-white"
+                          : "bg-slate-100 text-slate-400"
+                    }`}
+                  >
+                    {isActive && !isCurrent ? (
+                      <CheckCircle2 className="w-5 h-5" />
+                    ) : (
+                      idx + 1
+                    )}
+                  </div>
+                  <span
+                    className={`text-xs mt-2 font-medium ${
+                      isCurrent ? "text-[#5542F6]" : isActive ? "text-emerald-600" : "text-slate-400"
+                    }`}
+                  >
+                    {step.replace(/_/g, " ")}
+                  </span>
+                </div>
+                {idx < PIPELINE_STEPS.length - 1 && (
+                  <div className={`h-0.5 flex-1 -mt-5 ${isActive && currentStepIdx > idx ? "bg-emerald-400" : "bg-slate-200"}`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+        {(lead.status === "LOST" || lead.status === "UNQUALIFIED") && (
+          <div className="mt-4 flex items-center gap-2 text-sm">
+            <Badge value={lead.status} />
+            <span className="text-slate-500">— This lead is not in the main pipeline.</span>
+          </div>
+        )}
+      </div>
+
+      {/* ═══ Key Details Grid ═══ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+        <DetailCard
+          icon={DollarSign}
+          label="Estimated Value"
+          value={lead.estimatedValue ? format(lead.estimatedValue, { decimals: 0 }) : "Not set"}
+          accent={!!lead.estimatedValue}
+        />
+        <DetailCard
+          icon={UserCheck}
+          label="Assigned To"
+          value={lead.assignee ? `${lead.assignee.firstName} ${lead.assignee.lastName}` : "Unassigned"}
+          subtext={lead.assignee?.role?.replace(/_/g, " ")}
+        />
+        <DetailCard
+          icon={CalendarClock}
+          label="Follow-Up"
+          value={followUpDate || "Not scheduled"}
+          highlight={followUpDate && new Date(lead.followUpAt) <= new Date()}
+        />
+        <DetailCard
+          icon={Calendar}
+          label={lead.status === "CONVERTED" ? "Converted On" : "Last Updated"}
+          value={
+            convertedDate ||
+            (lead.updatedAt
+              ? new Date(lead.updatedAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })
+              : "—")
+          }
+        />
+      </div>
+
+      {/* ═══ Status Actions ═══ */}
+      {allowedTransitions.length > 0 && (
+        <div className="bg-white rounded-[24px] p-6 lg:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
+          <h3 className="text-lg font-bold text-slate-900 mb-2">Update Status</h3>
+          <p className="text-sm text-slate-500 mb-6">
+            Move this lead to the next stage in your pipeline.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            {allowedTransitions.map((nextStatus) => {
+              const isLost = nextStatus === "LOST";
+              const isConverted = nextStatus === "CONVERTED";
+              return (
+                <button
+                  key={nextStatus}
+                  onClick={() => handleStatusChange(nextStatus)}
+                  disabled={isPending}
+                  className={`flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${
+                    isConverted
+                      ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-600"
+                      : isLost
+                        ? "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100"
+                        : "bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  {nextStatus === "NEW" ? "Re-open" : nextStatus.replace(/_/g, " ")}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Notes & Lost Reason ═══ */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Notes */}
+        <div className="bg-white rounded-[24px] p-6 lg:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/50 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">Notes</h3>
+          </div>
+          {lead.notes ? (
+            <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">{lead.notes}</p>
+          ) : (
+            <p className="text-sm text-slate-400 italic">No notes added yet.</p>
+          )}
+        </div>
+
+        {/* Created By / Assignment Info */}
+        <div className="bg-white rounded-[24px] p-6 lg:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/50 flex items-center justify-center">
+              <User className="w-5 h-5 text-slate-500" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-900">People</h3>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600">
+                {(lead.createdBy?.firstName?.[0] || "").toUpperCase()}
+                {(lead.createdBy?.lastName?.[0] || "").toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-medium text-slate-900">
+                  {lead.createdBy?.firstName} {lead.createdBy?.lastName}
+                </p>
+                <p className="text-xs text-slate-400">Created this lead</p>
+              </div>
+            </div>
+            {lead.assignee && (
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-xs font-bold text-emerald-600">
+                  {(lead.assignee?.firstName?.[0] || "").toUpperCase()}
+                  {(lead.assignee?.lastName?.[0] || "").toUpperCase()}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">
+                    {lead.assignee.firstName} {lead.assignee.lastName}
+                  </p>
+                  <p className="text-xs text-slate-400">Assigned sales person · {lead.assignee.role?.replace(/_/g, " ")}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Lost Reason (if lost) ═══ */}
+      {lead.status === "LOST" && lead.lostReason && (
+        <div className="bg-red-50 rounded-[24px] p-6 lg:p-8 border border-red-200">
+          <div className="flex items-center gap-3 mb-3">
+            <XCircle className="w-5 h-5 text-red-500" />
+            <h3 className="text-lg font-bold text-red-700">Lost Reason</h3>
+          </div>
+          <p className="text-sm text-red-600 leading-relaxed">{lead.lostReason}</p>
+        </div>
+      )}
+
+      {/* ═══ Lost Reason Modal ═══ */}
+      {showLostModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowLostModal(false)} />
+          <div className="relative bg-white rounded-[24px] p-8 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">Mark Lead as Lost</h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Please provide a reason for marking <span className="font-medium text-slate-700">{lead.companyName}</span> as lost.
+            </p>
+            <textarea
+              value={lostReasonInput}
+              onChange={(e) => setLostReasonInput(e.target.value)}
+              rows={3}
+              placeholder="e.g., Budget constraints, went with competitor, no response..."
+              className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-[15px] font-medium text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all shadow-sm resize-none mb-6"
+              autoFocus
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowLostModal(false);
+                  setLostReasonInput("");
+                }}
+                className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLostConfirm}
+                disabled={isPending || !lostReasonInput.trim()}
+                className="px-5 py-2.5 text-sm font-semibold text-white bg-red-500 rounded-xl shadow-lg shadow-red-500/20 hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isPending ? "Updating..." : "Mark as Lost"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Detail Card Component ─── */
+
+function DetailCard({ icon: Icon, label, value, subtext, accent, highlight }) {
+  return (
+    <div
+      className={`rounded-[24px] p-6 flex flex-col justify-between min-h-[140px] ${
+        accent
+          ? "bg-[#5542F6] text-white shadow-xl shadow-indigo-500/20"
+          : highlight
+            ? "bg-amber-50 border border-amber-200"
+            : "bg-white border border-slate-100 shadow-sm shadow-slate-200/50"
+      }`}
+    >
+      <div className="flex justify-between items-start">
+        <span className={`font-medium text-sm ${accent ? "text-indigo-200" : highlight ? "text-amber-600" : "text-slate-600"}`}>
+          {label}
+        </span>
+        {Icon && (
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              accent ? "bg-white/20" : highlight ? "bg-amber-100" : "bg-slate-50 text-slate-400"
+            }`}
+          >
+            <Icon className="w-4 h-4" />
+          </div>
+        )}
+      </div>
+      <div>
+        <span
+          className={`text-lg font-bold ${accent ? "text-white" : highlight ? "text-amber-700" : "text-slate-900"}`}
+          suppressHydrationWarning
+        >
+          {value}
+        </span>
+        {subtext && (
+          <p className={`text-xs mt-0.5 ${accent ? "text-indigo-200" : "text-slate-400"}`}>{subtext}</p>
+        )}
+      </div>
+    </div>
+  );
+}

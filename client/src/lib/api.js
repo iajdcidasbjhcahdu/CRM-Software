@@ -166,6 +166,45 @@ export async function resetPasswordAPI(id, newPassword, accessToken) {
   });
 }
 
+/* ───────── Lead Endpoints ───────── */
+
+export async function getLeadsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/leads?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getLeadAPI(id, accessToken) {
+  return request(`/api/leads/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function createLeadAPI(data, accessToken) {
+  return request("/api/leads", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateLeadAPI(id, data, accessToken) {
+  return request(`/api/leads/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateLeadStatusAPI(id, data, accessToken) {
+  return request(`/api/leads/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteLeadAPI(id, accessToken) {
+  return request(`/api/leads/${id}`, { method: "DELETE", token: accessToken });
+}
+
 /* ───────── Generic Authenticated Requests ───────── */
 
 export async function apiGet(endpoint, accessToken) {
