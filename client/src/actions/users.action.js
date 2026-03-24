@@ -9,6 +9,7 @@ import {
   updateUserAPI,
   deleteUserAPI,
   resetPasswordAPI,
+  getClientsDropdownAPI,
 } from "@/lib/api";
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -120,5 +121,20 @@ export async function resetUserPassword(id, newPassword) {
     return { success: false, error: res.message };
   } catch (err) {
     return { success: false, error: err.message || "Failed to reset password" };
+  }
+}
+
+// ─── Get Clients for Dropdown ────────────────────────────
+
+export async function getClientsDropdown() {
+  const token = await getToken();
+  if (!token) return [];
+
+  try {
+    const res = await getClientsDropdownAPI(token);
+    if (res.success) return res.data;
+    return [];
+  } catch {
+    return [];
   }
 }

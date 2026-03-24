@@ -15,6 +15,9 @@ import {
   Clock,
   ArrowUpRight,
   Inbox,
+  Globe,
+  MapPin,
+  Factory,
 } from "lucide-react";
 
 import { useSite } from "@/context/SiteContext";
@@ -174,6 +177,61 @@ export default function UserReportContent({ report }) {
           </div>
         </div>
       </div>
+
+      {/* ═══ Linked Client Company (CLIENT role only) ═══ */}
+      {user.role === "CLIENT" && user.client && (
+        <div className="bg-white rounded-[24px] p-6 lg:p-8 border border-slate-100 shadow-sm shadow-slate-200/50">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200/50 flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-amber-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Linked Company</h3>
+              <span className="text-xs text-slate-400">Client portal account linked to this company</span>
+            </div>
+            <div className="ml-auto">
+              <Badge value={user.client.status} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <CompanyInfoItem icon={Building2} label="Company Name" value={user.client.companyName} />
+            <CompanyInfoItem icon={Mail} label="Contact Person" value={user.client.contactName} />
+            {user.client.email && <CompanyInfoItem icon={Mail} label="Email" value={user.client.email} />}
+            {user.client.phone && <CompanyInfoItem icon={Phone} label="Phone" value={user.client.phone} />}
+            {user.client.industry && <CompanyInfoItem icon={Factory} label="Industry" value={user.client.industry} />}
+            {user.client.website && (
+              <CompanyInfoItem
+                icon={Globe}
+                label="Website"
+                value={
+                  <a
+                    href={user.client.website.startsWith("http") ? user.client.website : `https://${user.client.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-indigo-600 hover:underline flex items-center gap-1"
+                  >
+                    {user.client.website}
+                    <ArrowUpRight className="w-3 h-3" />
+                  </a>
+                }
+              />
+            )}
+            {user.client.address && <CompanyInfoItem icon={MapPin} label="Address" value={user.client.address} />}
+            {user.client.createdAt && (
+              <CompanyInfoItem
+                icon={Calendar}
+                label="Client Since"
+                value={new Date(user.client.createdAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              />
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ═══ Summary Stats ═══ */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
@@ -389,6 +447,21 @@ export default function UserReportContent({ report }) {
           ]}
         />
       )}
+    </div>
+  );
+}
+
+/* ─── Company Info Row ─── */
+
+function CompanyInfoItem({ icon: Icon, label, value }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
+      <Icon className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+      <div className="min-w-0">
+        <span className="text-xs text-slate-400 font-medium block">{label}</span>
+        <span className="text-sm text-slate-700 font-medium break-words">{value}</span>
+      </div>
     </div>
   );
 }

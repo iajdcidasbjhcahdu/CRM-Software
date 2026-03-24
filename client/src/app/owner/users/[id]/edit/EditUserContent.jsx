@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone, Shield, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import { User, Mail, Phone, Shield, Lock, Eye, EyeOff, KeyRound, Building2 } from "lucide-react";
 
-import { updateUser, resetUserPassword } from "@/actions/users.action";
+import { updateUser, resetUserPassword, getClientsDropdown } from "@/actions/users.action";
 import PageHeader from "@/components/ui/PageHeader";
 import Toast from "@/components/ui/Toast";
 import SettingsCard from "@/components/settings/SettingsCard";
@@ -37,6 +37,7 @@ export default function EditUserContent({ user }) {
   const [toast, setToast] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
+  const [clients, setClients] = useState([]);
 
   const [form, setForm] = useState({
     firstName: user.firstName || "",
@@ -45,9 +46,23 @@ export default function EditUserContent({ user }) {
     phone: user.phone || "",
     role: user.role || "EMPLOYEE",
     status: user.status || "ACTIVE",
+    clientId: user.clientId || "",
   });
 
-  const update = (field, value) => setForm((p) => ({ ...p, [field]: value }));
+  // Fetch clients for dropdown when role is CLIENT
+  useEffect(() => {
+    if (form.role === "CLIENT" && clients.length === 0) {
+      getClientsDropdown().then((data) => setClients(data));
+    }
+  }, [form.role]);
+
+  const update = (field, value) => {
+    setForm((p) => {
+      const next = { ...p, [field]: value };
+      if (field === "role" && value !== "CLIENT") next.clientId = "";
+      return next;
+    });
+  };
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -61,7 +76,14 @@ export default function EditUserContent({ user }) {
     }
 
     startTransition(async () => {
-      const result = await updateUser(user.id, form);
+      const payload = { ...form };
+      // Send clientId as null to unlink when not CLIENT role
+      if (payload.role !== "CLIENT") {
+        payload.clientId = null;
+      } else if (!payload.clientId) {
+        payload.clientId = null;
+      }
+      const result = await updateUser(user.id, payload);
       if (result.success) {
         showToast("success", "User updated successfully");
       } else {
@@ -163,6 +185,35 @@ export default function EditUserContent({ user }) {
           />
         </div>
       </SettingsCard>
+
+      {/* Link to Client (only when role is CLIENT) */}
+      {form.role === "CLIENT" && (
+        <SettingsCard
+          title="Link to Client"
+          description="Associate this user with a client company for portal access."
+        >
+          <div className="max-w-md">
+            <SettingsSelect
+              label="Client Company"
+              icon={Building2}
+              value={form.clientId}
+              onChange={(e) => update("clientId", e.target.value)}
+              options={[
+                { value: "", label: "— Select a client (optional) —" },
+                ...clients.map((c) => ({
+                  value: c.id,
+                  label: `${c.companyName}${c.contactName ? ` — ${c.contactName}` : ""}`,
+                })),
+              ]}
+            />
+            {user.client && (
+              <p className="text-xs text-slate-500 mt-2">
+                Currently linked to <span className="font-medium text-slate-700">{user.client.companyName}</span>
+              </p>
+            )}
+          </div>
+        </SettingsCard>
+      )}
 
       <div className="flex items-center justify-between">
         <button

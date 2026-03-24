@@ -3,6 +3,11 @@ import catchAsync from "../../utils/catchAsync.js";
 import { ok, created } from "../../utils/apiResponse.js";
 
 class ClientController {
+  listAllForDropdown = catchAsync(async (req, res) => {
+    const clients = await clientService.listAllClientsForDropdown();
+    return ok(res, "Clients retrieved", clients);
+  });
+
   createClient = catchAsync(async (req, res) => {
     const client = await clientService.createClient(req.body);
     return created(res, "Client created successfully", client);

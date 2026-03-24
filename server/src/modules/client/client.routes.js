@@ -16,6 +16,7 @@ router.use(authenticate);
 
 const clientAccess = authorize("OWNER", "ADMIN", "ACCOUNT_MANAGER", "SALES_MANAGER");
 
+router.get("/dropdown", authorize("OWNER", "ADMIN"), clientController.listAllForDropdown);
 router.post("/", authorize("OWNER", "ADMIN"), validate(createClientSchema), clientController.createClient);
 router.get("/", clientAccess, validate(listClientsSchema), clientController.listClients);
 router.get("/:id", clientAccess, validate(getClientSchema), clientController.getClientById);

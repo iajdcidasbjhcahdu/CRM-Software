@@ -25,6 +25,7 @@ export const createUserSchema = z.object({
     phone: z.string().optional(),
     role: z.enum(roles, { required_error: "Role is required" }),
     status: z.enum(statuses).optional(),
+    clientId: z.string().nullable().optional(),
   }),
 });
 
@@ -40,6 +41,7 @@ export const updateUserSchema = z.object({
     avatar: z.string().nullable().optional(),
     role: z.enum(roles).optional(),
     status: z.enum(statuses).optional(),
+    clientId: z.string().nullable().optional(),
   }),
 });
 

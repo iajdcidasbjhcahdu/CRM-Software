@@ -1,5 +1,7 @@
+import bcrypt from "bcryptjs";
 import prisma from "../../utils/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
+import config from "../../config/index.js";
 
 const STAGE_TRANSITIONS = {
   DISCOVERY: ["PROPOSAL", "LOST"],
@@ -192,8 +194,10 @@ class DealService {
       const result = await prisma.$transaction(async (tx) => {
         // Check if client already exists with this email
         let client = null;
+        let isExistingClient = false;
         if (deal.lead.email) {
           client = await tx.client.findUnique({ where: { email: deal.lead.email } });
+          if (client) isExistingClient = true;
         }
 
         // Create client if doesn't exist
@@ -208,6 +212,48 @@ class DealService {
               accountManagerId: accountManagerId || null,
             },
           });
+        }
+
+        // Auto-create CLIENT-role user if one doesn't already exist for this client
+        let clientUser = null;
+        if (deal.lead.email) {
+          // Check if a user with this email already exists
+          const existingUser = await tx.user.findUnique({
+            where: { email: deal.lead.email },
+          });
+
+          if (existingUser) {
+            // If user exists but isn't linked to a client, link them
+            if (!existingUser.clientId && existingUser.role === "CLIENT") {
+              await tx.user.update({
+                where: { id: existingUser.id },
+                data: { clientId: client.id },
+              });
+            }
+            clientUser = existingUser;
+          } else {
+            // Generate a default password from company name
+            const defaultPassword = `${deal.lead.companyName.replace(/\s+/g, "")}@123`;
+            const hashedPassword = await bcrypt.hash(defaultPassword, config.bcrypt.saltRounds);
+
+            // Split contact name into first/last
+            const nameParts = deal.lead.contactName.trim().split(/\s+/);
+            const firstName = nameParts[0] || "Client";
+            const lastName = nameParts.slice(1).join(" ") || deal.lead.companyName;
+
+            clientUser = await tx.user.create({
+              data: {
+                email: deal.lead.email,
+                password: hashedPassword,
+                firstName,
+                lastName,
+                phone: deal.lead.phone || null,
+                role: "CLIENT",
+                status: "ACTIVE",
+                clientId: client.id,
+              },
+            });
+          }
         }
 
         // Create project
@@ -229,7 +275,13 @@ class DealService {
           include: DEAL_INCLUDE,
         });
 
-        return { deal: updatedDeal, client, project };
+        return {
+          deal: updatedDeal,
+          client,
+          project,
+          clientUser: clientUser ? { id: clientUser.id, email: clientUser.email } : null,
+          isExistingClient,
+        };
       });
 
       return result;

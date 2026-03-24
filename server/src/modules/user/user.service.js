@@ -15,6 +15,10 @@ const USER_SELECT = {
   status: true,
   isEmailVerified: true,
   lastLoginAt: true,
+  clientId: true,
+  client: {
+    select: { id: true, companyName: true, contactName: true, status: true },
+  },
   createdAt: true,
   updatedAt: true,
 };
@@ -34,6 +38,17 @@ class UserService {
 
     const hashedPassword = await bcrypt.hash(data.password, config.bcrypt.saltRounds);
 
+    // Validate clientId if provided (only for CLIENT role)
+    if (data.clientId) {
+      if (data.role !== "CLIENT") {
+        throw ApiError.badRequest("clientId can only be set for users with CLIENT role");
+      }
+      const client = await prisma.client.findUnique({ where: { id: data.clientId } });
+      if (!client) {
+        throw ApiError.badRequest("Linked client company not found");
+      }
+    }
+
     const user = await prisma.user.create({
       data: {
         email: data.email,
@@ -43,6 +58,7 @@ class UserService {
         phone: data.phone || null,
         role: data.role,
         status: data.status || "ACTIVE",
+        clientId: data.role === "CLIENT" ? (data.clientId || null) : null,
       },
       select: USER_SELECT,
     });
@@ -127,6 +143,23 @@ class UserService {
       }
     }
 
+    // Handle clientId — only valid for CLIENT role
+    const effectiveRole = data.role || user.role;
+    if (data.clientId !== undefined) {
+      if (effectiveRole !== "CLIENT") {
+        // Clear clientId if role is changing away from CLIENT
+        data.clientId = null;
+      } else if (data.clientId) {
+        const client = await prisma.client.findUnique({ where: { id: data.clientId } });
+        if (!client) throw ApiError.badRequest("Linked client company not found");
+      }
+    }
+
+    // If role changes away from CLIENT, clear the clientId
+    if (data.role && data.role !== "CLIENT" && user.clientId) {
+      data.clientId = null;
+    }
+
     const updated = await prisma.user.update({
       where: { id },
       data,
@@ -165,6 +198,22 @@ class UserService {
       where: { id },
       select: {
         ...USER_SELECT,
+        // For CLIENT role: also fetch their company's deals and projects
+        client: {
+          select: {
+            id: true, companyName: true, contactName: true, email: true,
+            phone: true, address: true, industry: true, website: true,
+            status: true, createdAt: true,
+            deal: { select: { id: true, title: true, value: true, stage: true } },
+            projects: {
+              select: {
+                id: true, name: true, status: true, budget: true,
+                startDate: true, endDate: true, createdAt: true,
+              },
+              orderBy: { createdAt: "desc" },
+            },
+          },
+        },
         // Leads created by or assigned to this user
         createdLeads: {
           select: {
@@ -232,14 +281,53 @@ class UserService {
     const allDeals = [...new Map([...user.createdDeals, ...user.assignedDeals].map(d => [d.id, d])).values()];
     const allProjects = [...new Map([...user.managedProjects, ...user.createdProjects].map(p => [p.id, p])).values()];
 
+    // For CLIENT-role users: merge in their company's projects and deals
+    let allClients = [...user.managedClients];
+    if (user.role === "CLIENT" && user.client) {
+      // Add the client's own projects (with client info added)
+      const clientProjects = (user.client.projects || []).map(p => ({
+        ...p,
+        client: { companyName: user.client.companyName },
+      }));
+      // Merge (dedup with existing)
+      const projectMap = new Map(allProjects.map(p => [p.id, p]));
+      clientProjects.forEach(p => { if (!projectMap.has(p.id)) projectMap.set(p.id, p); });
+      allProjects.splice(0, allProjects.length, ...projectMap.values());
+
+      // Add the client's founding deal
+      if (user.client.deal) {
+        const dealMap = new Map(allDeals.map(d => [d.id, d]));
+        if (!dealMap.has(user.client.deal.id)) {
+          dealMap.set(user.client.deal.id, {
+            ...user.client.deal,
+            lead: { companyName: user.client.companyName },
+            createdAt: user.client.createdAt,
+          });
+        }
+        allDeals.splice(0, allDeals.length, ...dealMap.values());
+      }
+
+      // Add their own company as a "client" entry
+      if (!allClients.find(c => c.id === user.client.id)) {
+        allClients.push({
+          id: user.client.id,
+          companyName: user.client.companyName,
+          contactName: user.client.contactName,
+          status: user.client.status,
+          industry: user.client.industry,
+          createdAt: user.client.createdAt,
+        });
+      }
+    }
+
     const summary = {
       totalLeads: allLeads.length,
       totalDeals: allDeals.length,
-      totalClients: user.managedClients.length,
+      totalClients: allClients.length,
       totalProjects: allProjects.length,
       wonDeals: allDeals.filter(d => d.stage === "WON").length,
       lostDeals: allDeals.filter(d => d.stage === "LOST").length,
-      activeClients: user.managedClients.filter(c => c.status === "ACTIVE").length,
+      activeClients: allClients.filter(c => c.status === "ACTIVE").length,
       totalDealValue: allDeals.reduce((sum, d) => sum + (Number(d.value) || 0), 0),
       wonDealValue: allDeals.filter(d => d.stage === "WON").reduce((sum, d) => sum + (Number(d.value) || 0), 0),
     };
@@ -249,12 +337,13 @@ class UserService {
         id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName,
         phone: user.phone, avatar: user.avatar, role: user.role, status: user.status,
         isEmailVerified: user.isEmailVerified, lastLoginAt: user.lastLoginAt,
+        clientId: user.clientId, client: user.client || null,
         createdAt: user.createdAt, updatedAt: user.updatedAt,
       },
       summary,
       leads: allLeads,
       deals: allDeals,
-      clients: user.managedClients,
+      clients: allClients,
       projects: allProjects,
     };
   }

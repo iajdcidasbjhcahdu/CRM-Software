@@ -16,6 +16,16 @@ const CLIENT_INCLUDE = {
 
 class ClientService {
   /**
+   * Lightweight list of all clients for dropdowns (id + companyName + status)
+   */
+  async listAllClientsForDropdown() {
+    return prisma.client.findMany({
+      select: { id: true, companyName: true, contactName: true, status: true },
+      orderBy: { companyName: "asc" },
+    });
+  }
+
+  /**
    * Create client manually (not from deal conversion)
    */
   async createClient(data) {

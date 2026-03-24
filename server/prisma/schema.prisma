@@ -116,10 +116,15 @@ model User {
   // Clients
   managedClients Client[] @relation("ClientAccountManager")
 
+  // Client portal — links CLIENT-role users to their company
+  clientId       String?  @map("client_id")
+  client         Client?  @relation("ClientPortalUsers", fields: [clientId], references: [id])
+
   // Projects
   managedProjects Project[] @relation("ProjectAccountManager")
   createdProjects Project[] @relation("ProjectCreator")
 
+  @@index([clientId])
   @@map("users")
 }
 
@@ -259,6 +264,9 @@ model Client {
   // Account manager
   accountManagerId String?     @map("account_manager_id")
   accountManager   User?       @relation("ClientAccountManager", fields: [accountManagerId], references: [id])
+
+  // Portal users — CLIENT-role users linked to this company
+  portalUsers     User[]       @relation("ClientPortalUsers")
 
   // Projects under this client
   projects        Project[]

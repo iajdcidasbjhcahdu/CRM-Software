@@ -117,6 +117,12 @@ export async function getDashboardStatsAPI(accessToken, period = "month") {
   });
 }
 
+/* ───────── Client Endpoints ───────── */
+
+export async function getClientsDropdownAPI(accessToken) {
+  return request("/api/clients/dropdown", { method: "GET", token: accessToken });
+}
+
 /* ───────── User Endpoints ───────── */
 
 export async function getUsersAPI(params, accessToken) {

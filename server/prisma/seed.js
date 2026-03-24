@@ -639,6 +639,25 @@ async function main() {
   console.log(`  ✅ ${clients.length} clients created\n`);
 
   // ═══════════════════════════════════════════════════════════
+  // 4b. LINK CLIENT-role users to their Client records
+  // ═══════════════════════════════════════════════════════════
+  console.log("🔗 Linking client users to companies...");
+
+  // clientUser1 (Deepak Malhotra / client@infosync.in) → was based on InfoSync lead
+  // InfoSync doesn't have a Client record yet (deal is in DISCOVERY), so link to MetroHealth for demo
+  // clientUser2 (Sarah Mitchell / client@globex.com) → was based on Globex lead (deal in PROPOSAL)
+  // For demo purposes, link them to existing clients:
+  await prisma.user.update({
+    where: { id: clientUser1.id },
+    data: { clientId: clientMetro.id },
+  });
+  await prisma.user.update({
+    where: { id: clientUser2.id },
+    data: { clientId: clientSwift.id },
+  });
+  console.log("  ✅ 2 client users linked to companies\n");
+
+  // ═══════════════════════════════════════════════════════════
   // 5. PROJECTS — all statuses
   // ═══════════════════════════════════════════════════════════
   console.log("📁 Creating projects...");
