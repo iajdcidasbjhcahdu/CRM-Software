@@ -4,6 +4,7 @@ import crypto from "crypto";
 import prisma from "../../utils/prisma.js";
 import config from "../../config/index.js";
 import { ApiError } from "../../utils/apiError.js";
+import otpService from "./otp.service.js";
 
 class AuthService {
   /**
@@ -43,7 +44,9 @@ class AuthService {
   }
 
   /**
-   * Login with email and password
+   * Login — Step 1: Validate credentials.
+   * If OTP is enabled, sends OTP and returns { otpRequired: true }.
+   * If OTP is not enabled, returns tokens directly.
    */
   async login(email, password) {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -61,6 +64,44 @@ class AuthService {
       throw ApiError.unauthorized("Invalid email or password");
     }
 
+    // Check if OTP login is enabled
+    const otpConfig = await otpService.getOtpConfig();
+
+    if (otpConfig.enabled) {
+      // Send OTP and return pending state
+      const otpResult = await otpService.sendOtp(user.id, user.email, user.firstName);
+      return {
+        otpRequired: true,
+        userId: user.id,
+        email: user.email,
+        expiryMins: otpResult.expiryMins,
+        digits: otpResult.digits,
+      };
+    }
+
+    // No OTP — issue tokens directly
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const tokens = await this.generateTokens(user.id);
+    const { password: _, ...userWithoutPassword } = user;
+
+    return { user: userWithoutPassword, tokens };
+  }
+
+  /**
+   * Login — Step 2: Verify OTP and issue tokens.
+   */
+  async verifyLoginOtp(userId, otpCode) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw ApiError.notFound("User not found");
+    if (user.status !== "ACTIVE") throw ApiError.forbidden("Account is not active");
+
+    // Verify OTP
+    await otpService.verifyOtp(userId, otpCode);
+
     // Update last login
     await prisma.user.update({
       where: { id: user.id },
@@ -68,10 +109,21 @@ class AuthService {
     });
 
     const tokens = await this.generateTokens(user.id);
-
     const { password: _, ...userWithoutPassword } = user;
 
     return { user: userWithoutPassword, tokens };
+  }
+
+  /**
+   * Resend OTP — generates a new OTP and sends it.
+   */
+  async resendOtp(userId) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw ApiError.notFound("User not found");
+    if (user.status !== "ACTIVE") throw ApiError.forbidden("Account is not active");
+
+    const otpResult = await otpService.sendOtp(user.id, user.email, user.firstName);
+    return otpResult;
   }
 
   /**

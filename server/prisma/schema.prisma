@@ -124,6 +124,9 @@ model User {
   managedProjects Project[] @relation("ProjectAccountManager")
   createdProjects Project[] @relation("ProjectCreator")
 
+  // OTPs
+  otps Otp[]
+
   @@index([clientId])
   @@map("users")
 }
@@ -354,8 +357,50 @@ model Settings {
   smtpPassword    String? @map("smtp_password")
   smtpIsSecure    Boolean @default(true) @map("smtp_is_secure")
 
+  // OTP Login Configuration
+  otpLoginEnabled Boolean @default(false) @map("otp_login_enabled")
+  otpDigits       Int     @default(6)     @map("otp_digits")
+  otpExpiryMins   Int     @default(5)     @map("otp_expiry_mins")
+
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   @@map("settings")
+}
+
+// ─── OTP (One-Time Password) ─────────────────────────
+// Stores pending OTP codes for login verification
+
+model Otp {
+  id        String   @id @default(cuid())
+  code      String
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  attempts  Int      @default(0)
+  verified  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("otps")
+}
+
+// ─── Email Template ──────────────────────────────────
+// System email templates managed by the admin
+
+model EmailTemplate {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  name        String
+  subject     String
+  body        String  @db.Text
+  description String?
+  variables   String? @db.Text
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("email_templates")
 }

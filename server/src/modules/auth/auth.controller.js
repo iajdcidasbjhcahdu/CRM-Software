@@ -13,11 +13,37 @@ class AuthController {
 
   /**
    * POST /api/auth/login
+   * Returns either { otpRequired: true, userId, ... } or { user, tokens }
    */
   login = catchAsync(async (req, res) => {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
+
+    if (result.otpRequired) {
+      return ok(res, "OTP sent to your email", result);
+    }
+
     return ok(res, "Login successful", result);
+  });
+
+  /**
+   * POST /api/auth/verify-otp
+   * Verifies OTP and returns tokens on success.
+   */
+  verifyOtp = catchAsync(async (req, res) => {
+    const { userId, otpCode } = req.body;
+    const result = await authService.verifyLoginOtp(userId, otpCode);
+    return ok(res, "OTP verified successfully", result);
+  });
+
+  /**
+   * POST /api/auth/resend-otp
+   * Resends a new OTP to the user.
+   */
+  resendOtp = catchAsync(async (req, res) => {
+    const { userId } = req.body;
+    const result = await authService.resendOtp(userId);
+    return ok(res, "OTP resent successfully", result);
   });
 
   /**

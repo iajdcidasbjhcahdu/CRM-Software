@@ -5,6 +5,8 @@ import validate from "../../middlewares/validate.middleware.js";
 import {
   registerSchema,
   loginSchema,
+  verifyOtpSchema,
+  resendOtpSchema,
   refreshTokenSchema,
   changePasswordSchema,
 } from "./auth.validation.js";
@@ -14,6 +16,8 @@ const router = Router();
 // Public routes
 // router.post("/register", validate(registerSchema), authController.register); // User Can't Register ThemSelf
 router.post("/login", validate(loginSchema), authController.login);
+router.post("/verify-otp", validate(verifyOtpSchema), authController.verifyOtp);
+router.post("/resend-otp", validate(resendOtpSchema), authController.resendOtp);
 router.post("/refresh-token", validate(refreshTokenSchema), authController.refreshToken);
 
 // Protected routes

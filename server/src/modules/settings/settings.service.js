@@ -1,4 +1,5 @@
 import prisma from "../../utils/prisma.js";
+import { clearTransporterCache } from "../../utils/mailer.js";
 
 class SettingsService {
   /**
@@ -39,6 +40,15 @@ class SettingsService {
       delete data.smtpPassword;
     }
 
+    // Track if SMTP fields are being changed
+    const smtpFieldsChanged = !!(
+      data.smtpHost !== undefined ||
+      data.smtpPort !== undefined ||
+      data.smtpEmail !== undefined ||
+      data.smtpPassword !== undefined ||
+      data.smtpIsSecure !== undefined
+    );
+
     let settings = await prisma.settings.findUnique({
       where: { id: "default" },
     });
@@ -52,6 +62,11 @@ class SettingsService {
         where: { id: "default" },
         data,
       });
+    }
+
+    // Clear cached nodemailer transporter if SMTP config changed
+    if (smtpFieldsChanged) {
+      clearTransporterCache();
     }
 
     const { createdAt, updatedAt, ...result } = settings;

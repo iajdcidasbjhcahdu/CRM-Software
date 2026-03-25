@@ -32,6 +32,19 @@ export const loginSchema = z.object({
   }),
 });
 
+export const verifyOtpSchema = z.object({
+  body: z.object({
+    userId: z.string().min(1, "User ID is required"),
+    otpCode: z.string().min(1, "OTP code is required"),
+  }),
+});
+
+export const resendOtpSchema = z.object({
+  body: z.object({
+    userId: z.string().min(1, "User ID is required"),
+  }),
+});
+
 export const refreshTokenSchema = z.object({
   body: z.object({
     refreshToken: z.string().min(1, "Refresh token is required"),

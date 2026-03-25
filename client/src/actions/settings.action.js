@@ -7,6 +7,9 @@ import {
   updateSiteAPI,
   getSettingsAPI,
   updateSettingsAPI,
+  getEmailTemplatesAPI,
+  getEmailTemplateAPI,
+  updateEmailTemplateAPI,
 } from "@/lib/api";
 
 // ─── Site Settings ──────────────────────────────────────────
@@ -87,5 +90,63 @@ export async function updateSystemSettings(data) {
     return { success: false, error: res.message };
   } catch (err) {
     return { success: false, error: err.message || "Failed to update settings" };
+  }
+}
+
+// ─── Email Templates ──────────────────────────────────────
+
+/**
+ * Fetch all email templates.
+ */
+export async function getEmailTemplates() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+
+  if (!accessToken) return [];
+
+  try {
+    const res = await getEmailTemplatesAPI(accessToken);
+    if (res.success) return res.data;
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Fetch a single email template by ID.
+ */
+export async function getEmailTemplate(id) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+
+  if (!accessToken) return null;
+
+  try {
+    const res = await getEmailTemplateAPI(id, accessToken);
+    if (res.success) return res.data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Update an email template.
+ */
+export async function updateEmailTemplate(id, data) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+
+  if (!accessToken) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  try {
+    const res = await updateEmailTemplateAPI(id, data, accessToken);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message || "Failed to update template" };
   }
 }

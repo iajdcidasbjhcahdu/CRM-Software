@@ -19,6 +19,7 @@ import clientRoutes from "./modules/client/client.routes.js";
 import projectRoutes from "./modules/project/project.routes.js";
 import dashboardRoutes from "./modules/dashboard/dashboard.routes.js";
 import settingsRoutes from "./modules/settings/settings.routes.js";
+import emailTemplateRoutes from "./modules/email-template/email-template.routes.js";
 
 const app = express();
 
@@ -71,6 +72,7 @@ app.use("/api/clients", clientRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/email-templates", emailTemplateRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

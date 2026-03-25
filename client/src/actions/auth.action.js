@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { loginAPI, refreshTokenAPI, getMeAPI, logoutAPI } from "@/lib/api";
+import { loginAPI, refreshTokenAPI, getMeAPI, logoutAPI, verifyOtpAPI, resendOtpAPI } from "@/lib/api";
 
 /* ───────── Role → Dashboard Path Map ───────── */
 
@@ -74,7 +74,10 @@ async function clearAuthCookies() {
 
 /**
  * Login action — called from the login form.
- * Returns { success, message, redirectTo } or { success: false, message }.
+ * Returns either:
+ *   { success: true, otpRequired: true, userId, email, expiryMins, digits }
+ *   { success: true, redirectTo, user }
+ *   { success: false, message }
  */
 export async function loginAction(prevState, formData) {
   const email = formData.get("email")?.toString().trim();
@@ -86,10 +89,24 @@ export async function loginAction(prevState, formData) {
 
   try {
     const res = await loginAPI(email, password);
-    const { user, tokens } = res.data;
+    const data = res.data;
 
+    // OTP required — don't set cookies yet
+    if (data.otpRequired) {
+      return {
+        success: true,
+        otpRequired: true,
+        userId: data.userId,
+        email: data.email,
+        expiryMins: data.expiryMins,
+        digits: data.digits,
+        message: res.message || "OTP sent to your email",
+      };
+    }
+
+    // Direct login — set cookies and redirect
+    const { user, tokens } = data;
     await setAuthCookies(tokens, user);
-
     const redirectTo = getDashboardPath(user.role);
 
     return { success: true, message: "Login successful", redirectTo, user };
@@ -97,6 +114,46 @@ export async function loginAction(prevState, formData) {
     return {
       success: false,
       message: error.message || "Invalid email or password.",
+    };
+  }
+}
+
+/**
+ * Verify OTP action — called from the OTP step of login.
+ */
+export async function verifyOtpAction(userId, otpCode) {
+  try {
+    const res = await verifyOtpAPI(userId, otpCode);
+    const { user, tokens } = res.data;
+
+    await setAuthCookies(tokens, user);
+    const redirectTo = getDashboardPath(user.role);
+
+    return { success: true, message: "OTP verified successfully", redirectTo, user };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Invalid OTP code.",
+    };
+  }
+}
+
+/**
+ * Resend OTP action.
+ */
+export async function resendOtpAction(userId) {
+  try {
+    const res = await resendOtpAPI(userId);
+    return {
+      success: true,
+      message: "OTP resent successfully",
+      expiryMins: res.data.expiryMins,
+      digits: res.data.digits,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || "Failed to resend OTP.",
     };
   }
 }
@@ -122,13 +179,6 @@ export async function logoutAction() {
 
 /**
  * Get the current authenticated user from cookies.
- * Validates the access token by calling /me.
- *
- * NOTE: This is called from Server Components (login page, dashboard layouts)
- * which can only READ cookies, not write them. So this function must be
- * read-only — no setAuthCookies or clearAuthCookies here.
- * Token refresh with cookie rotation is handled by the refreshSession action
- * which is only called from Server Actions / Route Handlers.
  */
 export async function getAuthUser() {
   const cookieStore = await cookies();
@@ -142,14 +192,12 @@ export async function getAuthUser() {
     const res = await getMeAPI(accessToken);
     return res.data;
   } catch {
-    // Access token invalid/expired — return null, let middleware handle redirect
     return null;
   }
 }
 
 /**
- * Refresh session — called as a Server Action only (not from Server Components).
- * Attempts to use the refresh token to get new tokens and update cookies.
+ * Refresh session — called as a Server Action only.
  */
 export async function refreshSession() {
   const cookieStore = await cookies();

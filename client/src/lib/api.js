@@ -76,6 +76,20 @@ export async function changePasswordAPI(accessToken, currentPassword, newPasswor
   });
 }
 
+export async function verifyOtpAPI(userId, otpCode) {
+  return request("/api/auth/verify-otp", {
+    method: "POST",
+    body: JSON.stringify({ userId, otpCode }),
+  });
+}
+
+export async function resendOtpAPI(userId) {
+  return request("/api/auth/resend-otp", {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+}
+
 /* ───────── Site Endpoint ───────── */
 
 export async function getSiteAPI() {
@@ -242,6 +256,24 @@ export async function updateDealStageAPI(id, data, accessToken) {
 
 export async function deleteDealAPI(id, accessToken) {
   return request(`/api/deals/${id}`, { method: "DELETE", token: accessToken });
+}
+
+/* ───────── Email Template Endpoints ───────── */
+
+export async function getEmailTemplatesAPI(accessToken) {
+  return request("/api/email-templates", { method: "GET", token: accessToken });
+}
+
+export async function getEmailTemplateAPI(id, accessToken) {
+  return request(`/api/email-templates/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function updateEmailTemplateAPI(id, data, accessToken) {
+  return request(`/api/email-templates/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
 }
 
 /* ───────── Generic Authenticated Requests ───────── */

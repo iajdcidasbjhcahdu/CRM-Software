@@ -13,6 +13,9 @@ import {
   Eye,
   EyeOff,
   Shield,
+  ShieldCheck,
+  Clock,
+  KeyRound,
 } from "lucide-react";
 import { updateSystemSettings } from "@/actions/settings.action";
 
@@ -32,6 +35,10 @@ export default function SmtpSettingsTab({ initialData }) {
     smtpEmail: initialData?.smtpEmail || "",
     smtpPassword: initialData?.smtpPassword || "",
     smtpIsSecure: initialData?.smtpIsSecure ?? true,
+    // OTP Settings
+    otpLoginEnabled: initialData?.otpLoginEnabled ?? false,
+    otpDigits: initialData?.otpDigits || 6,
+    otpExpiryMins: initialData?.otpExpiryMins || 5,
   });
 
   const isConfigured = initialData?.isSmtpConfigured || false;
@@ -46,12 +53,14 @@ export default function SmtpSettingsTab({ initialData }) {
         smtpHost: form.smtpHost || null,
         smtpEmail: form.smtpEmail || null,
         smtpPassword: form.smtpPassword || null,
+        otpDigits: Number(form.otpDigits),
+        otpExpiryMins: Number(form.otpExpiryMins),
       };
 
       const result = await updateSystemSettings(payload);
 
       if (result.success) {
-        setToast({ type: "success", message: "SMTP settings saved successfully!" });
+        setToast({ type: "success", message: "Email settings saved successfully!" });
         if (result.data?.smtpPassword) {
           setForm((p) => ({ ...p, smtpPassword: result.data.smtpPassword }));
         }
@@ -94,6 +103,7 @@ export default function SmtpSettingsTab({ initialData }) {
         </div>
       </div>
 
+      {/* ─── SMTP Configuration ────────────────────────── */}
       <SettingsCard
         title="SMTP Configuration"
         description="Configure your email server for sending transactional emails, notifications, and invitations."
@@ -181,11 +191,71 @@ export default function SmtpSettingsTab({ initialData }) {
         </div>
       </SettingsCard>
 
+      {/* ─── OTP Login Settings ────────────────────────── */}
+      <SettingsCard
+        title="OTP Login Verification"
+        description="When enabled, users will receive a one-time password via email after entering their credentials. Requires SMTP to be configured."
+      >
+        <div className="flex flex-col gap-6">
+          <SettingsToggle
+            label="Enable OTP Login"
+            description={
+              isConfigured
+                ? "Users will receive an OTP email after entering their password"
+                : "Configure SMTP first to enable OTP login"
+            }
+            icon={ShieldCheck}
+            iconColorClass="text-indigo-600"
+            iconBgClass="bg-indigo-50"
+            activeColorClass="bg-indigo-500"
+            isActive={form.otpLoginEnabled}
+            onToggle={() => {
+              if (!isConfigured && !form.otpLoginEnabled) return; // Block enabling without SMTP
+              update("otpLoginEnabled", !form.otpLoginEnabled);
+            }}
+          />
+
+          {form.otpLoginEnabled && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-1">
+              <SettingsInput
+                label="OTP Digits"
+                type="number"
+                icon={KeyRound}
+                value={form.otpDigits}
+                onChange={(e) => {
+                  const val = Math.min(8, Math.max(4, Number(e.target.value) || 4));
+                  update("otpDigits", val);
+                }}
+                placeholder="6"
+              />
+              <SettingsInput
+                label="OTP Expiry (minutes)"
+                type="number"
+                icon={Clock}
+                value={form.otpExpiryMins}
+                onChange={(e) => {
+                  const val = Math.min(30, Math.max(1, Number(e.target.value) || 5));
+                  update("otpExpiryMins", val);
+                }}
+                placeholder="5"
+              />
+            </div>
+          )}
+
+          {!isConfigured && (
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm bg-amber-50/50 text-amber-600 border border-amber-100">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              SMTP must be configured before OTP login can be enabled.
+            </div>
+          )}
+        </div>
+      </SettingsCard>
+
       <div className="flex justify-end mt-2">
         <SettingsButton
           isPending={isPending}
           onClick={handleSave}
-          label="Save SMTP Settings"
+          label="Save Email Settings"
         />
       </div>
     </div>

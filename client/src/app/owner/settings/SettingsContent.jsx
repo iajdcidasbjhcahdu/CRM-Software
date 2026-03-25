@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { Globe, Server } from "lucide-react";
+import { BotIcon, Coins, Database, Globe, LayoutTemplateIcon, Mail, Server } from "lucide-react";
 import SiteSettingsTab from "./SiteSettingsTab";
 import SmtpSettingsTab from "./SmtpSettingsTab";
+import EmailTemplatesTab from "./EmailTemplatesTab";
 
 const TABS = [
   { id: "site", label: "Site Settings", icon: Globe },
-  { id: "smtp", label: "SMTP Settings", icon: Server },
+  { id: "smtp", label: "Email Settings", icon: Mail },
+  { id: "email-templates", label: "Email Templates", icon: LayoutTemplateIcon },
+  { id: "storage", label: "Storage Settings", icon: Database },
+  { id: "payment", label: "Payment Settings", icon: Coins },
+  { id: "ai", label: "AI Settings", icon: BotIcon },
 ];
 
 export default function SettingsContent({ initialSite, initialSettings }) {
@@ -24,7 +29,7 @@ export default function SettingsContent({ initialSite, initialSettings }) {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex items-center gap-1 bg-white rounded-2xl p-1.5 border border-slate-200 shadow-sm shadow-slate-200/50 w-fit">
+      <div className="flex flex-wrap items-center gap-1 bg-white rounded-2xl p-1.5 border border-slate-200 shadow-sm shadow-slate-200/50 w-fit">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -35,7 +40,7 @@ export default function SettingsContent({ initialSite, initialSettings }) {
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 isActive
                   ? "bg-slate-900 text-white shadow-md shadow-slate-900/10"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 border-b border-slate-200"
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -51,6 +56,7 @@ export default function SettingsContent({ initialSite, initialSettings }) {
         {activeTab === "smtp" && (
           <SmtpSettingsTab initialData={initialSettings} />
         )}
+        {activeTab === "email-templates" && <EmailTemplatesTab />}
       </div>
     </div>
   );
