@@ -1,0 +1,124 @@
+"use server";
+
+import { cookies } from "next/headers";
+import {
+  getProjectsAPI,
+  getProjectAPI,
+  createProjectAPI,
+  updateProjectAPI,
+  deleteProjectAPI,
+  getUsersAPI,
+} from "@/lib/api";
+import { getClientsDropdown } from "./clients.action";
+
+// ─── Helpers ─────────────────────────────────────────────
+
+async function getToken() {
+  const cookieStore = await cookies();
+  return cookieStore.get("accessToken")?.value;
+}
+
+// ─── List Projects ───────────────────────────────────────
+
+export async function getProjects(params = {}) {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await getProjectsAPI(params, token);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message || "Failed to fetch projects" };
+  }
+}
+
+// ─── Get Single Project ─────────────────────────────────
+
+export async function getProject(id) {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await getProjectAPI(id, token);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message || "Failed to fetch project" };
+  }
+}
+
+// ─── Create Project ─────────────────────────────────────
+
+export async function createProject(data) {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await createProjectAPI(data, token);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message || "Failed to create project" };
+  }
+}
+
+// ─── Update Project ─────────────────────────────────────
+
+export async function updateProject(id, data) {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await updateProjectAPI(id, data, token);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message || "Failed to update project" };
+  }
+}
+
+// ─── Delete Project ─────────────────────────────────────
+
+export async function deleteProject(id) {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await deleteProjectAPI(id, token);
+    if (res.success) return { success: true };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message || "Failed to delete project" };
+  }
+}
+
+// ─── Get Account Managers ───────────────────────────────
+
+export async function getProjectAccountManagers() {
+  const token = await getToken();
+  if (!token) return [];
+
+  try {
+    const allRes = await getUsersAPI({ limit: 100 }, token);
+    if (allRes.success) {
+      return allRes.data.users
+        .filter((u) => ["OWNER", "ADMIN", "ACCOUNT_MANAGER"].includes(u.role))
+        .map((u) => ({
+          id: u.id,
+          name: `${u.firstName} ${u.lastName}`,
+          role: u.role,
+          email: u.email,
+        }));
+    }
+    return [];
+  } catch {
+    return [];
+  }
+}
+
+// ─── Get Clients for Project dropdown ───────────────────
+
+export async function getProjectClients() {
+  return getClientsDropdown();
+}

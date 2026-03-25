@@ -133,8 +133,68 @@ export async function getDashboardStatsAPI(accessToken, period = "month") {
 
 /* ───────── Client Endpoints ───────── */
 
+export async function getClientsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/clients?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getClientAPI(id, accessToken) {
+  return request(`/api/clients/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function createClientAPI(data, accessToken) {
+  return request("/api/clients", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateClientAPI(id, data, accessToken) {
+  return request(`/api/clients/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteClientAPI(id, accessToken) {
+  return request(`/api/clients/${id}`, { method: "DELETE", token: accessToken });
+}
+
 export async function getClientsDropdownAPI(accessToken) {
   return request("/api/clients/dropdown", { method: "GET", token: accessToken });
+}
+
+/* ───────── Project Endpoints ───────── */
+
+export async function getProjectsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/projects?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getProjectAPI(id, accessToken) {
+  return request(`/api/projects/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function createProjectAPI(data, accessToken) {
+  return request("/api/projects", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateProjectAPI(id, data, accessToken) {
+  return request(`/api/projects/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteProjectAPI(id, accessToken) {
+  return request(`/api/projects/${id}`, { method: "DELETE", token: accessToken });
 }
 
 /* ───────── User Endpoints ───────── */

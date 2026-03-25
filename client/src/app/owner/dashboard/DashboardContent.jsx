@@ -544,7 +544,7 @@ export default function DashboardContent({ stats: initialStats }) {
 
           <div className="flex flex-1 items-center gap-8 pl-4">
             <div
-              className="relative w-32 h-32 rounded-full flex items-center justify-center flex-shrink-0"
+              className="relative w-32 h-32 rounded-full flex items-center justify-center shrink-0"
               style={{ background: conicGradient }}
             >
               <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
