@@ -19,6 +19,10 @@ class SiteService {
       return record;
     }, CACHE_TTL);
 
+    if(site.isMaintenanceMode){
+      cache.del(CACHE_KEY);
+    }
+
     // Strip timestamps for public response
     const { createdAt, updatedAt, ...publicData } = site;
     return publicData;

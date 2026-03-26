@@ -2,6 +2,11 @@ import jwt from "jsonwebtoken";
 import config from "../config/index.js";
 import prisma from "../utils/prisma.js";
 import { ApiError } from "../utils/apiError.js";
+import cache from "../utils/cache.js";
+
+const CACHE_KEY_SITE = "site";
+
+const checkMaintainenceModeRoles = ["OWNER"];
 
 /**
  * Verifies the JWT access token from the Authorization header
@@ -17,16 +22,6 @@ const authenticate = async (req, _res, next) => {
 
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, config.jwt.accessSecret);
-
-    // const refToken = await prisma.RefreshToken.findUnique({
-    //   where: {
-    //     userId: decoded.userId
-    //   },
-    // });
-
-    // if (!refToken) {
-    //   throw ApiError.unauthorized("Invalid access token");
-    // }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
@@ -46,6 +41,15 @@ const authenticate = async (req, _res, next) => {
 
     if (user.status !== "ACTIVE") {
       throw ApiError.forbidden("Account is not active");
+    }
+
+    // get settings and check if site is on maintainence or not
+    const site = await cache.get(CACHE_KEY_SITE, async () => {
+      return prisma.site.findUnique({ where: { id: "default" } });
+    }, 600);
+
+    if (site?.isMaintenanceMode && !checkMaintainenceModeRoles.includes(user.role)) {
+      throw ApiError.forbidden("Site is under maintenance");
     }
 
     req.user = user;

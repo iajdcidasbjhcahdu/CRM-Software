@@ -133,6 +133,10 @@ class UserService {
       throw ApiError.notFound("User not found");
     }
 
+    if(user.role == "OWNER") {
+      throw ApiError.badRequest("Users with role OWNER cannot be updated");
+    }
+
     // If email is being changed, check for duplicates
     if (data.email && data.email !== user.email) {
       const emailTaken = await prisma.user.findUnique({
@@ -360,6 +364,10 @@ class UserService {
 
     if (!user) {
       throw ApiError.notFound("User not found");
+    }
+
+    if(user.role == "OWNER") {
+      throw ApiError.badRequest("Users with role OWNER cannot be deleted");
     }
 
     // Revoke all sessions

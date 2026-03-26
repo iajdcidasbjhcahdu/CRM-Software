@@ -28,6 +28,15 @@ async function request(endpoint, options = {}) {
   const data = await res.json();
 
   if (!res.ok) {
+    console.log(data.message.toLowerCase());
+
+    if (data.message.toLowerCase().includes("under maintenance")) {
+      if (typeof window !== "undefined") {
+        window.location.href = "/maintenance";
+        return new Promise(() => { });
+      }
+    }
+    
     const error = new Error(data.message || "Something went wrong");
     error.status = res.status;
     error.data = data;

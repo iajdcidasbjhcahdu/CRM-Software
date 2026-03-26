@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { loginAPI, refreshTokenAPI, getMeAPI, logoutAPI, verifyOtpAPI, resendOtpAPI } from "@/lib/api";
+import { checkForMaintenance } from "@/lib/checkForMaintainence";
 
 /* ───────── Role → Dashboard Path Map ───────── */
 
@@ -191,7 +192,8 @@ export async function getAuthUser() {
   try {
     const res = await getMeAPI(accessToken);
     return res.data;
-  } catch {
+  } catch (error) {
+    checkForMaintenance(error);
     return null;
   }
 }
@@ -216,7 +218,8 @@ export async function refreshSession() {
     await setAuthCookies(newTokens, meRes.data);
 
     return meRes.data;
-  } catch {
+  } catch (error) {
+    checkForMaintenance(error);
     await clearAuthCookies();
     return null;
   }
