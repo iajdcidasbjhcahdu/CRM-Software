@@ -21,6 +21,7 @@ export const createProjectSchema = z.object({
       price: z.coerce.number().min(0),
       originalPrice: z.coerce.number().min(0),
     })).optional(),
+    teamIds: z.array(z.string().min(1)).optional(),
   }),
 });
 
@@ -37,6 +38,7 @@ export const updateProjectSchema = z.object({
     accountManagerId: z.string().optional().nullable(),
     billingCycle: z.enum(billingCycles).optional(),
     nextBillingDate: z.coerce.date().optional().nullable(),
+    teamIds: z.array(z.string().min(1)).optional(),
   }),
 });
 

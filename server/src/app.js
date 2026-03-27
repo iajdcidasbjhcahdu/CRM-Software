@@ -22,6 +22,8 @@ import settingsRoutes from "./modules/settings/settings.routes.js";
 import emailTemplateRoutes from "./modules/email-template/email-template.routes.js";
 import serviceRoutes from "./modules/service/service.routes.js";
 import storageRoutes from "./modules/storage/storage.routes.js";
+import teamRoutes from "./modules/team/team.routes.js";
+import searchRoutes from "./modules/search/search.routes.js";
 
 const app = express();
 
@@ -87,6 +89,8 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/email-templates", emailTemplateRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/storage", storageRoutes);
+app.use("/api/teams", teamRoutes);
+app.use("/api/search", searchRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

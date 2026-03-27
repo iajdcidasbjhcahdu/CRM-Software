@@ -427,6 +427,71 @@ export async function getUploadConfigAPI(params, accessToken) {
   });
 }
 
+/* ───────── Team Endpoints ───────── */
+
+export async function getTeamsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/teams?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getTeamAPI(id, accessToken) {
+  return request(`/api/teams/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function createTeamAPI(data, accessToken) {
+  return request("/api/teams", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateTeamAPI(id, data, accessToken) {
+  return request(`/api/teams/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteTeamAPI(id, accessToken) {
+  return request(`/api/teams/${id}`, { method: "DELETE", token: accessToken });
+}
+
+export async function getTeamsDropdownAPI(accessToken) {
+  return request("/api/teams/dropdown", { method: "GET", token: accessToken });
+}
+
+export async function addTeamMemberAPI(teamId, data, accessToken) {
+  return request(`/api/teams/${teamId}/members`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function removeTeamMemberAPI(teamId, userId, accessToken) {
+  return request(`/api/teams/${teamId}/members/${userId}`, {
+    method: "DELETE",
+    token: accessToken,
+  });
+}
+
+export async function updateTeamMemberPermissionsAPI(teamId, userId, permissions, accessToken) {
+  return request(`/api/teams/${teamId}/members/${userId}`, {
+    method: "PATCH",
+    body: JSON.stringify({ permissions }),
+    token: accessToken,
+  });
+}
+
+/* ───────── Global Search ───────── */
+
+export async function globalSearchAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/search?${query}`, { method: "GET", token: accessToken });
+}
+
 /* ───────── Generic Authenticated Requests ───────── */
 
 export async function apiGet(endpoint, accessToken) {

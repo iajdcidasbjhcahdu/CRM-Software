@@ -221,18 +221,32 @@ export default function ServiceDetailContent({ initialService }) {
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">Linked Deals & Projects</h2>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {dealServices && dealServices.length > 0 ? (
-            <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-              <span>Used in <strong>{dealServices.length}</strong> deal{dealServices.length !== 1 ? 's' : ''}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 gap-4 transition-colors hover:bg-slate-100 dark:hover:bg-slate-900">
+              <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                  <Handshake className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                </div>
+                <span>Included in <strong className="text-slate-900 dark:text-white font-semibold">{dealServices.length}</strong> deal{dealServices.length !== 1 ? 's' : ''}</span>
+              </div>
             </div>
           ) : null}
 
           {projectServices && projectServices.length > 0 ? (
-            <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-              <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-              <span>Used in <strong>{projectServices.length}</strong> project{projectServices.length !== 1 ? 's' : ''}</span>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 gap-4 transition-colors hover:bg-slate-100 dark:hover:bg-slate-900">
+              <div className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-300">
+                <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center shrink-0">
+                  <FolderKanban className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                </div>
+                <span>Billed in <strong className="text-slate-900 dark:text-white font-semibold">{projectServices.length}</strong> project{projectServices.length !== 1 ? 's' : ''}.</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm bg-white dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
+                <span className="text-slate-500 dark:text-slate-400">Avg. Revenue / Project:</span>
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400" suppressHydrationWarning>
+                  {format(projectServices.reduce((acc, curr) => acc + (curr.price * curr.quantity || 0), 0) / projectServices.length)}
+                </span>
+              </div>
             </div>
           ) : null}
 

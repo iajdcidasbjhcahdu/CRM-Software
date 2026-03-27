@@ -10,6 +10,7 @@ import {
   getUsersAPI,
 } from "@/lib/api";
 import { getClientsDropdown } from "./clients.action";
+import { getTeamsDropdownAPI } from "@/lib/api";
 
 // ─── Helpers ─────────────────────────────────────────────
 
@@ -121,4 +122,18 @@ export async function getProjectAccountManagers() {
 
 export async function getProjectClients() {
   return getClientsDropdown();
+}
+
+// ─── Get Teams for Project dropdown ─────────────────────
+
+export async function getProjectTeams() {
+  const token = await getToken();
+  if (!token) return [];
+  try {
+    const res = await getTeamsDropdownAPI(token);
+    if (res.success) return res.data || [];
+    return [];
+  } catch {
+    return [];
+  }
 }

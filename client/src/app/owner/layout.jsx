@@ -59,6 +59,15 @@ const navItems = [
     ],
   },
   {
+    name: "Teams",
+    href: "/owner/teams",
+    icon: "Users",
+    children: [
+      { name: "All Teams", href: "/owner/teams" },
+      { name: "Add Team", href: "/owner/teams/create" },
+    ],
+  },
+  {
     name: "Services",
     href: "/owner/services",
     icon: "PackageCheck",

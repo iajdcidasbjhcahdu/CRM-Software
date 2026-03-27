@@ -48,6 +48,20 @@ const PROJECT_INCLUDE = {
     },
     orderBy: { createdAt: "asc" },
   },
+  projectTeams: {
+    include: {
+      team: {
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          _count: { select: { members: true } },
+          lead: { select: { id: true, firstName: true, lastName: true, avatar: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+  },
 };
 
 class ProjectService {
@@ -79,34 +93,51 @@ class ProjectService {
       data.nextBillingDate = computeNextBillingDate(data.startDate, data.billingCycle);
     }
 
-    // Extract services before creating project (not a Prisma field)
+    // Extract services and teams before creating project (not Prisma fields)
     const servicesInput = data.services;
     delete data.services;
+    const teamIds = data.teamIds;
+    delete data.teamIds;
 
-    // If services provided, use a transaction to create project + services
-    if (servicesInput && servicesInput.length > 0) {
+    // Use transaction if we have services or teams to link
+    const hasExtras = (servicesInput && servicesInput.length > 0) || (teamIds && teamIds.length > 0);
+
+    if (hasExtras) {
       return prisma.$transaction(async (tx) => {
         const project = await tx.project.create({
           data: { ...data, createdById },
         });
 
         // Validate & create project services
-        for (const item of servicesInput) {
-          const service = await tx.service.findUnique({ where: { id: item.serviceId } });
-          if (!service) throw ApiError.badRequest(`Service ${item.serviceId} not found`);
+        if (servicesInput && servicesInput.length > 0) {
+          for (const item of servicesInput) {
+            const service = await tx.service.findUnique({ where: { id: item.serviceId } });
+            if (!service) throw ApiError.badRequest(`Service ${item.serviceId} not found`);
 
-          const originalPrice = item.originalPrice ?? (service.salePrice ?? service.price);
-          const price = item.price ?? originalPrice;
+            const originalPrice = item.originalPrice ?? (service.salePrice ?? service.price);
+            const price = item.price ?? originalPrice;
 
-          await tx.projectService.create({
-            data: {
-              projectId: project.id,
-              serviceId: item.serviceId,
-              quantity: item.quantity || 1,
-              price,
-              originalPrice,
-            },
-          });
+            await tx.projectService.create({
+              data: {
+                projectId: project.id,
+                serviceId: item.serviceId,
+                quantity: item.quantity || 1,
+                price,
+                originalPrice,
+              },
+            });
+          }
+        }
+
+        // Assign teams to project
+        if (teamIds && teamIds.length > 0) {
+          for (const teamId of teamIds) {
+            const team = await tx.team.findUnique({ where: { id: teamId } });
+            if (!team) throw ApiError.badRequest(`Team ${teamId} not found`);
+            await tx.projectTeam.create({
+              data: { projectId: project.id, teamId },
+            });
+          }
         }
 
         // Return with full includes
@@ -206,6 +237,34 @@ class ProjectService {
       } else if (refDate && !data.nextBillingDate) {
         data.nextBillingDate = computeNextBillingDate(refDate, newCycle);
       }
+    }
+
+    // Handle teamIds separately
+    const teamIds = data.teamIds;
+    delete data.teamIds;
+
+    if (teamIds !== undefined) {
+      return prisma.$transaction(async (tx) => {
+        const updated = await tx.project.update({
+          where: { id },
+          data,
+        });
+
+        // Remove existing team links and recreate
+        await tx.projectTeam.deleteMany({ where: { projectId: id } });
+        if (teamIds && teamIds.length > 0) {
+          for (const teamId of teamIds) {
+            await tx.projectTeam.create({
+              data: { projectId: id, teamId },
+            });
+          }
+        }
+
+        return tx.project.findUnique({
+          where: { id },
+          include: PROJECT_INCLUDE,
+        });
+      });
     }
 
     return prisma.project.update({

@@ -186,7 +186,7 @@ export default function ConvertDealContent({ initialDeal, accountManagers, avail
   );
 
   return (
-    <div className="flex flex-col gap-6 w-full max-w-4xl">
+    <div className="flex flex-col gap-6 w-full">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
 
       <PageHeader
@@ -201,7 +201,7 @@ export default function ConvertDealContent({ initialDeal, accountManagers, avail
       />
 
       {/* ─── Deal Summary Banner ─── */}
-      <div className="rounded-[24px] border border-emerald-200 bg-gradient-to-r from-emerald-50 to-teal-50 p-6 shadow-sm dark:shadow-none shadow-slate-200/50 dark:shadow-none">
+      <div className="rounded-[24px] border border-emerald-200 bg-emerald-50 p-6 shadow-sm shadow-slate-200/50 dark:shadow-none dark:bg-slate-900">
         <div className="flex items-center gap-3 mb-4">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center shadow-md shadow-emerald-200">
             <Trophy className="h-5 w-5 text-white" />
@@ -228,7 +228,7 @@ export default function ConvertDealContent({ initialDeal, accountManagers, avail
               {deal.value ? format(Number(deal.value)) : "—"}
             </p>
           </div>
-          <div>
+          <div className="flex items-center gap-2">
             <span className="text-slate-400">Stage</span>
             <Badge value={deal.stage} />
           </div>

@@ -88,9 +88,10 @@ class ServiceService {
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.price !== undefined) updateData.price = data.price;
-    if (data.salePrice !== undefined) updateData.salePrice = data.salePrice;
     if (data.points !== undefined) updateData.points = data.points;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
+
+    updateData.salePrice = data.salePrice || null;
 
     const updated = await prisma.service.update({
       where: { id },

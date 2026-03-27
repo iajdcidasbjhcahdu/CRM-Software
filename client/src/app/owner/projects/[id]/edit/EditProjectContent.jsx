@@ -8,8 +8,11 @@ import {
   DollarSign,
   UserCheck,
   RefreshCw,
+  Users2,
+  Plus,
+  X,
 } from "lucide-react";
-import { updateProject, getProjectAccountManagers } from "@/actions/projects.action";
+import { updateProject, getProjectAccountManagers, getProjectTeams } from "@/actions/projects.action";
 import PageHeader from "@/components/ui/PageHeader";
 import Toast from "@/components/ui/Toast";
 import Badge from "@/components/ui/Badge";
@@ -28,6 +31,11 @@ export default function EditProjectContent({ project }) {
   const [isPending, startTransition] = useTransition();
   const [managers, setManagers] = useState([]);
   const [toast, setToast] = useState(null);
+  const [availableTeams, setAvailableTeams] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState(
+    project.projectTeams?.map((pt) => pt.team) || []
+  );
+  const [selectedTeamId, setSelectedTeamId] = useState("");
 
   const [form, setForm] = useState({
     name: project.name || "",
@@ -44,6 +52,7 @@ export default function EditProjectContent({ project }) {
 
   useEffect(() => {
     getProjectAccountManagers().then(setManagers);
+    getProjectTeams().then(setAvailableTeams);
   }, []);
 
   const isLocked = ["COMPLETED", "CANCELLED"].includes(project.status);
@@ -55,6 +64,24 @@ export default function EditProjectContent({ project }) {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
   };
+
+  // ─── Team helpers ───
+  const handleAddTeam = () => {
+    if (!selectedTeamId) return;
+    if (selectedTeams.find((t) => t.id === selectedTeamId)) return;
+    const team = availableTeams.find((t) => t.id === selectedTeamId);
+    if (!team) return;
+    setSelectedTeams((prev) => [...prev, team]);
+    setSelectedTeamId("");
+  };
+
+  const handleRemoveTeam = (teamId) => {
+    setSelectedTeams((prev) => prev.filter((t) => t.id !== teamId));
+  };
+
+  const addableTeams = availableTeams.filter(
+    (t) => !selectedTeams.find((added) => added.id === t.id)
+  );
 
   const handleSave = () => {
     if (!form.name.trim()) {
@@ -75,6 +102,9 @@ export default function EditProjectContent({ project }) {
         payload.nextBillingDate = null;
       }
       if (!payload.nextBillingDate) payload.nextBillingDate = null;
+
+      // Attach teams
+      payload.teamIds = selectedTeams.map((t) => t.id);
 
       const result = await updateProject(project.id, payload);
       if (result.success) {
@@ -248,6 +278,69 @@ export default function EditProjectContent({ project }) {
           <p className="text-xs text-slate-400 mt-2">
             Leave empty to auto-calculate from the start date.
           </p>
+        )}
+      </SettingsCard>
+
+      {/* Teams */}
+      <SettingsCard
+        title="Teams"
+        description="Assign teams to this project."
+      >
+        <div className="flex items-end gap-3 mb-6">
+          <div className="flex-1">
+            <SettingsSelect
+              label="Add a Team"
+              icon={Users2}
+              value={selectedTeamId}
+              onChange={(e) => setSelectedTeamId(e.target.value)}
+              options={[
+                { value: "", label: "— Select Team —" },
+                ...addableTeams.map((t) => ({
+                  value: t.id,
+                  label: t.name,
+                })),
+              ]}
+              disabled={isFieldDisabled}
+            />
+          </div>
+          <button
+            onClick={handleAddTeam}
+            disabled={!selectedTeamId || isFieldDisabled}
+            className="h-[52px] px-5 rounded-xl bg-indigo-600 text-white font-semibold text-sm hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2 shrink-0"
+          >
+            <Plus className="h-4 w-4" />
+            Add
+          </button>
+        </div>
+
+        {selectedTeams.length === 0 ? (
+          <div className="text-center py-8 text-slate-400 text-sm">
+            No teams assigned to this project.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {selectedTeams.map((team) => (
+              <div
+                key={team.id}
+                className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {team.name?.[0]?.toUpperCase() || "T"}
+                  </div>
+                  <p className="font-semibold text-slate-800 dark:text-slate-200 text-sm">{team.name}</p>
+                </div>
+                {!isFieldDisabled && (
+                  <button
+                    onClick={() => handleRemoveTeam(team.id)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </SettingsCard>
 

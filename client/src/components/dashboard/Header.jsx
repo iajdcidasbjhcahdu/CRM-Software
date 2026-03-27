@@ -2,8 +2,9 @@
 
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
-import { Search, Bell, Settings, Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import GlobalSearch from "./GlobalSearch";
 
 const ROLE_PREFIX_MAP = {
   OWNER: "/owner",
@@ -18,6 +19,7 @@ const ROLE_PREFIX_MAP = {
 
 export default function Header({ isMobile, onMenuClick }) {
   const { user } = useAuth();
+  const rolePrefix = ROLE_PREFIX_MAP[user?.role] || "/owner";
 
   // Get current date string like "Today, Mon 22 Nov"
   const getFormattedDate = () => {
@@ -41,15 +43,8 @@ export default function Header({ isMobile, onMenuClick }) {
           </button>
         )}
 
-        {/* Search */}
-        <div className="relative flex items-center w-full h-12 rounded-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 px-4 focus-within:ring-2 focus-within:ring-indigo-500/20 focus-within:border-indigo-500 shadow-sm dark:shadow-none transition-all shadow-slate-200/50">
-          <Search className="w-5 h-5 text-slate-400 shrink-0" />
-          <input
-            type="text"
-            placeholder="Search"
-            className="w-full bg-transparent border-none outline-none px-3 text-sm text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
-          />
-        </div>
+        {/* Global Search */}
+        <GlobalSearch rolePrefix={rolePrefix} />
       </div>
 
       {/* Center Date (Hidden on mobile / tablet) */}
@@ -70,7 +65,7 @@ export default function Header({ isMobile, onMenuClick }) {
         {/* User Profile */}
         <div className="hidden sm:flex items-center gap-3 pl-2">
           <Link
-            href={`${ROLE_PREFIX_MAP[user?.role] || "/owner"}/profile`}
+            href={`${rolePrefix}/profile`}
             className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold overflow-hidden border border-slate-200 dark:border-slate-700 hover:ring-2 hover:ring-indigo-500/20 transition-all"
           >
             {user?.avatar ? (

@@ -42,7 +42,13 @@ const errorHandler = (err, _req, res, _next) => {
  * 404 handler for unknown routes.
  */
 const notFoundHandler = (req, _res, next) => {
-  next(ApiError.notFound(`Route not found: ${req.method} ${req.originalUrl}`));
+
+  // Redirect to / route
+  // if (req.url.startsWith("/api")) {
+  //   return next(ApiError.notFound(`Route not found: ${req.method} ${req.originalUrl}`));
+  // }
+
+  _res.redirect("/");
 };
 
 export { errorHandler, notFoundHandler };

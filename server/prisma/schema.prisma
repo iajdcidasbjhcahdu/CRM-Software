@@ -135,6 +135,10 @@ model User {
   // OTPs
   otps Otp[]
 
+  // Teams
+  ledTeams       Team[]       @relation("TeamLead")
+  teamMembers    TeamMember[]
+
   @@index([clientId])
   @@map("users")
 }
@@ -328,6 +332,9 @@ model Project {
   // Services attached to this project
   projectServices ProjectService[]
 
+  // Teams assigned to this project
+  projectTeams    ProjectTeam[]
+
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
 
@@ -483,6 +490,73 @@ model Otp {
   @@index([userId])
   @@index([expiresAt])
   @@map("otps")
+}
+
+// ─── Team ────────────────────────────────────────────
+// Teams group employees together for projects
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @db.Text
+  avatar      String?
+
+  // Team lead (label only, not enforced as a permission)
+  leadId      String?  @map("lead_id")
+  lead        User?    @relation("TeamLead", fields: [leadId], references: [id])
+
+  // Members
+  members     TeamMember[]
+
+  // Projects this team is assigned to
+  projectTeams ProjectTeam[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([leadId])
+  @@index([createdAt])
+  @@map("teams")
+}
+
+// ─── Team Member ─────────────────────────────────────
+// Junction table: User ↔ Team with permissions
+
+model TeamMember {
+  id          String @id @default(cuid())
+  teamId      String @map("team_id")
+  userId      String @map("user_id")
+
+  // Permissions (dummy for now — JSON object for flexibility)
+  permissions Json?  @default("{}")
+
+  team        Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@unique([teamId, userId])
+  @@index([teamId])
+  @@index([userId])
+  @@map("team_members")
+}
+
+// ─── Project ↔ Team (many-to-many) ──────────────────
+
+model ProjectTeam {
+  id        String  @id @default(cuid())
+  projectId String  @map("project_id")
+  teamId    String  @map("team_id")
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  team      Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([projectId, teamId])
+  @@index([projectId])
+  @@index([teamId])
+  @@map("project_teams")
 }
 
 // ─── Email Template ──────────────────────────────────

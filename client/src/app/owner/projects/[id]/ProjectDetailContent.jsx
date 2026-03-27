@@ -23,6 +23,8 @@ import {
   ListChecks,
   RefreshCw,
   CalendarClock,
+  Users2,
+  Crown,
 } from "lucide-react";
 import { useSite } from "@/context/SiteContext";
 import PageHeader from "@/components/ui/PageHeader";
@@ -262,9 +264,9 @@ export default function ProjectDetailContent({ initialProject }) {
 
       {/* Recurring Billing Info — only show for recurring projects */}
       {isRecurring && (
-        <div className="bg-gradient-to-r from-violet-50 to-indigo-50 rounded-[24px] p-6 border border-violet-100 shadow-sm dark:shadow-none">
+        <div className="bg-violet-50 rounded-[24px] p-6 border border-violet-100 dark:border-slate-800 shadow-sm dark:bg-slate-950 dark:shadow-none">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-violet-100 border border-violet-200 dark:border-slate-800 flex items-center justify-center">
               <CalendarClock className="w-5 h-5 text-violet-600" />
             </div>
             <div>
@@ -273,15 +275,15 @@ export default function ProjectDetailContent({ initialProject }) {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-violet-100">
+            <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-violet-100 dark:border-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Billing Cycle</p>
               <p className="text-sm font-bold text-violet-700">{getBillingLabel(project.billingCycle)}</p>
             </div>
-            <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-violet-100">
+            <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-violet-100 dark:border-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Next Billing Date</p>
               <p className="text-sm font-bold text-slate-900 dark:text-slate-50">{formatDate(project.nextBillingDate)}</p>
             </div>
-            <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-violet-100">
+            <div className="bg-white dark:bg-slate-950 rounded-xl p-4 border border-violet-100 dark:border-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 mb-1">Budget per Cycle</p>
               <p className="text-sm font-bold text-slate-900 dark:text-slate-50" suppressHydrationWarning>
                 {project.budget ? format(Number(project.budget), { decimals: 0 }) : "Not Set"}
@@ -301,7 +303,7 @@ export default function ProjectDetailContent({ initialProject }) {
               ? `${project.accountManager.firstName} ${project.accountManager.lastName}`
               : "Unassigned"
           }
-          subtext={project.accountManager?.role || ""}
+          subtext={project.accountManager?.role.replaceAll("_", " ") || ""}
         />
       </div>
 
@@ -468,6 +470,51 @@ export default function ProjectDetailContent({ initialProject }) {
         </div>
       )}
 
+      {/* Assigned Teams Section */}
+      {project.projectTeams && project.projectTeams.length > 0 && (
+        <div className="bg-white dark:bg-slate-950 rounded-[24px] p-6 lg:p-8 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none shadow-slate-200/50 dark:shadow-none">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-900/20 border border-violet-100 dark:border-violet-900/30 flex items-center justify-center">
+              <Users2 className="w-5 h-5 text-violet-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">Assigned Teams</h3>
+              <p className="text-xs text-slate-400">{project.projectTeams.length} team{project.projectTeams.length !== 1 ? "s" : ""} working on this project</p>
+            </div>
+          </div>
+          <div className="space-y-3">
+            {project.projectTeams.map((pt) => (
+              <Link
+                key={pt.id}
+                href={`/owner/teams/${pt.team.id}`}
+                className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors group"
+              >
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {pt.team.name?.[0]?.toUpperCase() || "T"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 group-hover:text-indigo-600 transition-colors">
+                      {pt.team.name}
+                    </p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-xs text-slate-400">{pt.team._count?.members || 0} members</span>
+                      {pt.team.lead && (
+                        <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <Crown className="w-3 h-3 text-amber-500" />
+                          {pt.team.lead.firstName} {pt.team.lead.lastName}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <ExternalLink className="w-4 h-4 text-slate-300 group-hover:text-indigo-400 transition-colors" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Notes Section */}
       <div className="bg-white dark:bg-slate-950 rounded-[24px] p-6 lg:p-8 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none shadow-slate-200/50 dark:shadow-none">
         <div className="flex items-center gap-3 mb-4">
@@ -483,20 +530,20 @@ export default function ProjectDetailContent({ initialProject }) {
         )}
       </div>
 
-      {/* Team Section */}
+      {/* People Section */}
       <div className="bg-white dark:bg-slate-950 rounded-[24px] p-6 lg:p-8 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none shadow-slate-200/50 dark:shadow-none">
         <div className="flex items-center gap-3 mb-4">
           <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/50 flex items-center justify-center">
             <User className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </div>
-          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">Team</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">People</h3>
         </div>
         <div className="flex flex-col">
           {project.accountManager && (
             <AvatarBadge
               initials={`${project.accountManager.firstName[0]}${project.accountManager.lastName[0]}`}
               name={`${project.accountManager.firstName} ${project.accountManager.lastName}`}
-              label={project.accountManager.role}
+              label="Account Manager"
             />
           )}
           {project.createdBy && (
