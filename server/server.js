@@ -1,5 +1,6 @@
 import app from "./src/app.js";
 import config from "./src/config/index.js";
+import notificationService from "./src/modules/notification/notification.service.js";
 import prisma from "./src/utils/prisma.js";
 import bcrypt from "bcryptjs";
 
@@ -33,6 +34,27 @@ const createAccounts = async () => {
 
 }
 
+const sendNotificationToAdminOnSystemStart = async () => {
+  
+  console.log("Sending notification to admin on system start");
+
+  const owners = await prisma.user.findMany({
+    where: {
+      role: "OWNER"
+    }
+  })
+
+  await notificationService.sendBulk({
+    userIds: owners.filter((owner) => owner.email == "kunalbhatia2603@gmail.com").map((owner) => owner.id),
+    title: "System Restarted",
+    description: "System restarted successfully",
+    type: "INFO",
+    channel: "IN_APP",
+    linkUrl: "/"
+  });
+
+}
+
 const startServer = async () => {
   try {
     // Verify database connection
@@ -40,6 +62,10 @@ const startServer = async () => {
     console.log("✅ Database connected successfully");
 
     await createAccounts();
+
+    if(config.env === "development") {
+      await sendNotificationToAdminOnSystemStart();
+    }
 
     app.listen(config.port, () => {
       console.log(`🚀 Server running on port ${config.port} [${config.env}]`);

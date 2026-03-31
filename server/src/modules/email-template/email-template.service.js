@@ -70,6 +70,46 @@ const DEFAULT_TEMPLATES = [
     variables: JSON.stringify(["userName", "siteName", "companyName", "contactName", "leadSource", "leadUrl"]),
     body: "",
   },
+  {
+    slug: "notification",
+    name: "General Notification",
+    subject: "{{title}} — {{siteName}}",
+    description: "Sent for general in-app notifications that also need email delivery.",
+    variables: JSON.stringify(["userName", "siteName", "title", "description", "linkUrl", "type"]),
+    body: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:520px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1e293b 0%,#334155 100%);padding:32px 32px 28px;text-align:center;">
+      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">{{siteName}}</h1>
+      <p style="margin:8px 0 0;color:#94a3b8;font-size:13px;">Notification</p>
+    </div>
+    <!-- Body -->
+    <div style="padding:32px;">
+      <p style="margin:0 0 8px;color:#334155;font-size:15px;">Hello <strong>{{userName}}</strong>,</p>
+      <p style="margin:0 0 20px;color:#64748b;font-size:14px;line-height:1.6;">You have a new notification:</p>
+      <!-- Notification Card -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <h2 style="margin:0 0 8px;color:#1e293b;font-size:16px;font-weight:700;">{{title}}</h2>
+        <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">{{description}}</p>
+      </div>
+      {{#if linkUrl}}
+      <div style="text-align:center;margin-bottom:24px;">
+        <a href="{{linkUrl}}" style="display:inline-block;background:#5542F6;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;">View Details</a>
+      </div>
+      {{/if}}
+      <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;">This is an automated notification from {{siteName}}.</p>
+    </div>
+    <!-- Footer -->
+    <div style="background:#f8fafc;padding:20px 32px;border-top:1px solid #f1f5f9;text-align:center;">
+      <p style="margin:0;color:#94a3b8;font-size:11px;">&copy; {{siteName}} — All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
 ];
 
 class EmailTemplateService {

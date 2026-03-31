@@ -24,6 +24,7 @@ import serviceRoutes from "./modules/service/service.routes.js";
 import storageRoutes from "./modules/storage/storage.routes.js";
 import teamRoutes from "./modules/team/team.routes.js";
 import searchRoutes from "./modules/search/search.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
 
 const app = express();
 
@@ -91,6 +92,7 @@ app.use("/api/services", serviceRoutes);
 app.use("/api/storage", storageRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

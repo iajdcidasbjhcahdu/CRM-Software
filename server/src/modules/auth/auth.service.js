@@ -8,6 +8,7 @@ import { sendMail } from "../../utils/mailer.js";
 import emailTemplateService from "../email-template/email-template.service.js";
 import cache from "../../utils/cache.js";
 import otpService from "./otp.service.js";
+import notificationService from "../notification/notification.service.js";
 
 class AuthService {
   /**
@@ -167,7 +168,7 @@ class AuthService {
 
     await prisma.refreshToken
       .delete({ where: { token: refreshToken } })
-      .catch(() => {});
+      .catch(() => { });
   }
 
   /**
@@ -274,15 +275,15 @@ class AuthService {
     // If template has body, use it; otherwise send a simple OTP email
     const { subject, body } = template?.body
       ? emailTemplateService.renderTemplate(template, {
-          userName: user.firstName,
-          siteName,
-          otpCode: code,
-          expiryMins: String(expiryMins),
-        })
+        userName: user.firstName,
+        siteName,
+        otpCode: code,
+        expiryMins: String(expiryMins),
+      })
       : {
-          subject: `Password Reset OTP — ${siteName}`,
-          body: `<p>Hi ${user.firstName},</p><p>Your password reset OTP is: <strong>${code}</strong></p><p>This code expires in ${expiryMins} minutes.</p><p>If you didn't request this, please ignore this email.</p>`,
-        };
+        subject: `Password Reset OTP — ${siteName}`,
+        body: `<p>Hi ${user.firstName},</p><p>Your password reset OTP is: <strong>${code}</strong></p><p>This code expires in ${expiryMins} minutes.</p><p>If you didn't request this, please ignore this email.</p>`,
+      };
 
     await sendMail({ to: user.email, subject, html: body });
 
@@ -309,6 +310,15 @@ class AuthService {
 
     // Revoke all refresh tokens for security
     await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+
+    await notificationService.send({
+      userId: user.id,
+      title: "Password Reset",
+      description: "Your password has been reset successfully.",
+      type: "USER",
+      channel: "IN_APP",
+      linkUrl: `/${user.role.toLowerCase()}/dashboard`,
+    });
 
     return { passwordReset: true };
   }

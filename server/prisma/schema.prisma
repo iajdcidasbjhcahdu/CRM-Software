@@ -139,6 +139,9 @@ model User {
   ledTeams       Team[]       @relation("TeamLead")
   teamMembers    TeamMember[]
 
+  // Notifications
+  notifications  Notification[]
+
   @@index([clientId])
   @@map("users")
 }
@@ -557,6 +560,51 @@ model ProjectTeam {
   @@index([projectId])
   @@index([teamId])
   @@map("project_teams")
+}
+
+// ─── Notification ────────────────────────────────────
+
+enum NotificationType {
+  INFO
+  SUCCESS
+  WARNING
+  ERROR
+  LEAD
+  DEAL
+  CLIENT
+  PROJECT
+  TEAM
+  SERVICE
+  USER
+  SYSTEM
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  BOTH
+}
+
+model Notification {
+  id          String             @id @default(cuid())
+  title       String
+  description String             @db.Text
+  type        NotificationType   @default(INFO)
+  channel     NotificationChannel @default(IN_APP)
+  isRead      Boolean            @default(false) @map("is_read")
+  readAt      DateTime?          @map("read_at")
+  emailSent   Boolean            @default(false) @map("email_sent")
+  linkUrl     String?            @map("link_url")
+
+  userId      String             @map("user_id")
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime           @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+  @@map("notifications")
 }
 
 // ─── Email Template ──────────────────────────────────
