@@ -61,16 +61,23 @@ function timeAgo(dateStr) {
   return date.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 }
 
+const LIMIT = 20;
+
 export default function NotificationDropdown() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState([]);
   const [pagination, setPagination] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [actionLoading, setActionLoading] = useState(null);
   const containerRef = useRef(null);
   const pollingRef = useRef(null);
+  const sentinelRef = useRef(null);
+  const scrollContainerRef = useRef(null);
 
   // Fetch unread count (for badge)
   const fetchUnreadCount = useCallback(async () => {
@@ -80,17 +87,35 @@ export default function NotificationDropdown() {
     }
   }, []);
 
-  // Fetch notifications list
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    const res = await getNotifications({ page: 1, limit: 20 });
-    setLoading(false);
+  // Fetch notifications list (page 1 = replace, page > 1 = append)
+  const fetchNotifications = useCallback(async (page = 1) => {
+    if (page === 1) setLoading(true);
+    else setLoadingMore(true);
+
+    const res = await getNotifications({ page, limit: LIMIT });
+
+    if (page === 1) setLoading(false);
+    else setLoadingMore(false);
+
     if (res.success && res.data) {
-      setNotifications(res.data.notifications || []);
+      const incoming = res.data.notifications || [];
+      if (page === 1) {
+        setNotifications(incoming);
+      } else {
+        setNotifications((prev) => [...prev, ...incoming]);
+      }
       setPagination(res.data.pagination);
+      setCurrentPage(page);
+      setHasMore(page < (res.data.pagination?.totalPages || 1));
       setUnreadCount(res.data.unreadCount ?? 0);
     }
   }, []);
+
+  // Load next page
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    fetchNotifications(currentPage + 1);
+  }, [loadingMore, hasMore, currentPage, fetchNotifications]);
 
   // Poll unread count every 10s
   useEffect(() => {
@@ -99,10 +124,37 @@ export default function NotificationDropdown() {
     return () => clearInterval(pollingRef.current);
   }, [fetchUnreadCount]);
 
-  // Fetch full list when dropdown opens
+  // Fetch page 1 when dropdown opens, reset scroll
   useEffect(() => {
-    if (open) fetchNotifications();
+    if (open) {
+      setCurrentPage(1);
+      setHasMore(false);
+      fetchNotifications(1);
+      // Reset scroll position
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+      }
+    }
   }, [open, fetchNotifications]);
+
+  // IntersectionObserver for infinite scroll
+  useEffect(() => {
+    if (!open) return;
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore && !loading) {
+          loadMore();
+        }
+      },
+      { root: scrollContainerRef.current, threshold: 0.1 }
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [open, hasMore, loadingMore, loading, loadMore]);
 
   // Close on click outside
   useEffect(() => {
@@ -252,7 +304,7 @@ export default function NotificationDropdown() {
           </div>
 
           {/* Notification List */}
-          <div className="overflow-y-auto max-h-[calc(100vh-300px)] flex-1">
+          <div ref={scrollContainerRef} className="overflow-y-auto max-h-[calc(100vh-300px)] flex-1">
             {loading && notifications.length === 0 ? (
               <div className="flex items-center justify-center py-12 text-slate-400">
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
@@ -265,86 +317,91 @@ export default function NotificationDropdown() {
                 <p className="text-xs mt-1">You're all caught up!</p>
               </div>
             ) : (
-              notifications.map((notification) => {
-                const config = TYPE_CONFIG[notification.type] || TYPE_CONFIG.INFO;
-                const Icon = config.icon;
+              <>
+                {notifications.map((notification) => {
+                  const config = TYPE_CONFIG[notification.type] || TYPE_CONFIG.INFO;
+                  const Icon = config.icon;
 
-                return (
-                  <div
-                    key={notification.id}
-                    onClick={() => handleItemClick(notification)}
-                    className={`flex gap-3 px-5 py-3.5 transition-colors group ${
-                      notification.linkUrl ? "cursor-pointer" : "cursor-default"
-                    } ${
-                      notification.isRead
-                        ? "hover:bg-slate-50 dark:hover:bg-slate-900/30"
-                        : "bg-indigo-50/40 dark:bg-indigo-500/5 hover:bg-indigo-50/70 dark:hover:bg-indigo-500/10"
-                    }`}
-                  >
-                    {/* Icon */}
+                  return (
                     <div
-                      className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${config.bg}`}
+                      key={notification.id}
+                      onClick={() => handleItemClick(notification)}
+                      className={`flex gap-3 px-5 py-3.5 transition-colors group ${
+                        notification.linkUrl ? "cursor-pointer" : "cursor-default"
+                      } ${
+                        notification.isRead
+                          ? "hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                          : "bg-indigo-50/40 dark:bg-indigo-500/5 hover:bg-indigo-50/70 dark:hover:bg-indigo-500/10"
+                      }`}
                     >
-                      <Icon className={`w-4 h-4 ${config.color}`} />
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p
-                          className={`text-sm leading-snug truncate ${
-                            notification.isRead
-                              ? "text-slate-600 dark:text-slate-400 font-medium"
-                              : "text-slate-900 dark:text-slate-50 font-semibold"
-                          }`}
-                        >
-                          {notification.title}
-                        </p>
-                        {!notification.isRead && (
-                          <div className="w-2 h-2 rounded-full bg-[#5542F6] shrink-0 mt-1.5" />
-                        )}
+                      {/* Icon */}
+                      <div
+                        className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 mt-0.5 ${config.bg}`}
+                      >
+                        <Icon className={`w-4 h-4 ${config.color}`} />
                       </div>
-                      <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
-                        {notification.description}
-                      </p>
-                      <div className="flex items-center justify-between mt-1.5">
-                        <span className="text-[10px] text-slate-400 font-medium">
-                          {timeAgo(notification.createdAt)}
-                        </span>
-                        {/* Actions */}
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!notification.isRead && (
-                            <button
-                              onClick={(e) => handleMarkRead(e, notification.id)}
-                              disabled={actionLoading === notification.id}
-                              className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
-                              title="Mark as read"
-                            >
-                              {actionLoading === notification.id ? (
-                                <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
-                              ) : (
-                                <Check className="w-3 h-3 text-slate-400" />
-                              )}
-                            </button>
-                          )}
-                          {/* <button
-                            onClick={(e) => handleDelete(e, notification.id)}
-                            disabled={actionLoading === `del-${notification.id}`}
-                            className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                            title="Delete"
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p
+                            className={`text-sm leading-snug truncate ${
+                              notification.isRead
+                                ? "text-slate-600 dark:text-slate-400 font-medium"
+                                : "text-slate-900 dark:text-slate-50 font-semibold"
+                            }`}
                           >
-                            {actionLoading === `del-${notification.id}` ? (
-                              <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
-                            ) : (
-                              <Trash2 className="w-3 h-3 text-slate-400 hover:text-red-500" />
+                            {notification.title}
+                          </p>
+                          {!notification.isRead && (
+                            <div className="w-2 h-2 rounded-full bg-[#5542F6] shrink-0 mt-1.5" />
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
+                          {notification.description}
+                        </p>
+                        <div className="flex items-center justify-between mt-1.5">
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {timeAgo(notification.createdAt)}
+                          </span>
+                          {/* Actions */}
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!notification.isRead && (
+                              <button
+                                onClick={(e) => handleMarkRead(e, notification.id)}
+                                disabled={actionLoading === notification.id}
+                                className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-slate-200/70 dark:hover:bg-slate-700 transition-colors"
+                                title="Mark as read"
+                              >
+                                {actionLoading === notification.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin text-slate-400" />
+                                ) : (
+                                  <Check className="w-3 h-3 text-slate-400" />
+                                )}
+                              </button>
                             )}
-                          </button> */}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+
+                {/* Infinite scroll sentinel */}
+                <div ref={sentinelRef} className="py-1">
+                  {loadingMore && (
+                    <div className="flex items-center justify-center py-3 text-slate-400">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      <span className="text-xs">Loading more...</span>
+                    </div>
+                  )}
+                  {!hasMore && notifications.length > 0 && (
+                    <p className="text-center text-[10px] text-slate-400 py-3">
+                      {pagination?.total || notifications.length} notifications · End of list
+                    </p>
+                  )}
+                </div>
+              </>
             )}
           </div>
 

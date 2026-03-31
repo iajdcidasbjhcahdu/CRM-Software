@@ -88,11 +88,20 @@ export default function DealDetailContent({ initialDeal }) {
   const [availableServices, setAvailableServices] = useState([]);
   const [selectedServiceId, setSelectedServiceId] = useState("");
 
+  // Documents — loaded from deal include + can be refreshed separately
+  const [documents, setDocuments] = useState(initialDeal.documents || []);
+  const [docsLoading, setDocsLoading] = useState(false);
+
   useEffect(() => {
     if (showAddServiceModal && availableServices.length === 0) {
       getServicesDropdown().then(setAvailableServices);
     }
   }, [showAddServiceModal]);
+
+  // Keep documents in sync when deal is refreshed
+  useEffect(() => {
+    if (deal.documents) setDocuments(deal.documents);
+  }, [deal]);
 
   const showToast = (type, message) => {
     setToast({ type, message });
@@ -197,15 +206,26 @@ export default function DealDetailContent({ initialDeal }) {
           { label: deal.title },
         ]}
         actions={
-          deal.stage !== "WON" ? (
-            <Link
-              href={`/owner/deals/${deal.id}/edit`}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#5542F6] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-[#4636d4] transition-all"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit Deal
-            </Link>
-          ) : null
+          <div className="flex items-center gap-3">
+            {deal.stage !== "WON" && deal.stage !== "LOST" && (
+              <Link
+                href={`/owner/deals/${deal.id}/proposal`}
+                className="flex items-center gap-2 px-5 py-2.5 bg-emerald-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all"
+              >
+                <FileText className="w-4 h-4" />
+                Proposal
+              </Link>
+            )}
+            {deal.stage !== "WON" && (
+              <Link
+                href={`/owner/deals/${deal.id}/edit`}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#5542F6] text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-[#4636d4] transition-all"
+              >
+                <Pencil className="w-4 h-4" />
+                Edit Deal
+              </Link>
+            )}
+          </div>
         }
       />
 
@@ -531,6 +551,97 @@ export default function DealDetailContent({ initialDeal }) {
           </div>
         </div>
       )}
+
+      {/* ═══ Documents / Proposals ═══ */}
+      <div className="bg-white dark:bg-slate-950 rounded-[24px] p-6 lg:p-8 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none shadow-slate-200/50 dark:shadow-none">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-indigo-600" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50">Documents & Proposals</h3>
+              <p className="text-xs text-slate-400">Proposals and documents attached to this deal</p>
+            </div>
+          </div>
+          {deal.stage !== "WON" && deal.stage !== "LOST" && (
+            <Link
+              href={`/owner/deals/${deal.id}/proposal`}
+              className="flex items-center gap-2 px-4 py-2 bg-[#5542F6] text-white text-sm font-semibold rounded-xl hover:bg-[#4636d4] transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              Add Proposal
+            </Link>
+          )}
+        </div>
+
+        {docsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <ListChecks className="w-5 h-5 animate-spin text-slate-400 mr-2" />
+            <span className="text-sm text-slate-400">Loading documents...</span>
+          </div>
+        ) : documents.length > 0 ? (
+          <div className="space-y-3">
+            {documents.map((doc) => (
+              <div
+                key={doc.id}
+                className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:border-slate-200 transition-colors"
+              >
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    doc.isAiGenerated
+                      ? "bg-gradient-to-br from-indigo-400 to-purple-500"
+                      : "bg-gradient-to-br from-emerald-400 to-teal-500"
+                  } text-white text-sm font-bold`}>
+                    {doc.type?.[0] || "D"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50 truncate">{doc.name}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                        {doc.type}
+                      </span>
+                      <span className="text-[10px] text-slate-400">v{doc.version}</span>
+                      {doc.isAiGenerated && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                          AI
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-400">
+                        {doc.addedBy ? `by ${doc.addedBy.firstName} ${doc.addedBy.lastName}` : ""}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(doc.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={doc.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition-colors shrink-0"
+                >
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <FileText className="w-10 h-10 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-400">No documents attached to this deal yet.</p>
+            {deal.stage !== "WON" && deal.stage !== "LOST" && (
+              <Link
+                href={`/owner/deals/${deal.id}/proposal`}
+                className="mt-3 inline-block text-sm font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+              >
+                Create your first proposal
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* ═══ Notes & People ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

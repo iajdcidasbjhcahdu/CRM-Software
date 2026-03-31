@@ -27,5 +27,13 @@ export const updateSettingsSchema = z.object({
     storageCustomPostUrl: z.string().url("Invalid POST URL").max(500).nullable().optional(),
     storageCustomFileKey: z.string().max(100).nullable().optional(),
     storageCustomUrlKey: z.string().max(100).nullable().optional(),
+
+    // AI
+    aiProvider: z.enum(["NONE", "GEMINI", "OPENAI", "CUSTOM"]).optional(),
+    aiApiKey: z.string().max(500).nullable().optional(),
+    aiModel: z.string().max(100).nullable().optional(),
+    aiBaseUrl: z.string().url("Invalid AI base URL").max(500).nullable().optional(),
+    aiTemperature: z.coerce.number().min(0).max(2).optional(),
+    aiMaxTokens: z.coerce.number().int().min(100).max(128000).optional(),
   }),
 });

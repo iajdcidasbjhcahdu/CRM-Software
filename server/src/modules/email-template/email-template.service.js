@@ -71,6 +71,54 @@ const DEFAULT_TEMPLATES = [
     body: "",
   },
   {
+    slug: "document-shared",
+    name: "Document Shared",
+    subject: "{{documentName}} — {{siteName}}",
+    description: "Sent when a proposal or document is shared with a client via email.",
+    variables: JSON.stringify(["siteName", "senderName", "senderEmail", "documentName", "documentType", "documentVersion", "dealTitle", "message", "viewUrl"]),
+    body: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div style="max-width:520px;margin:40px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.06);">
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#5542F6 0%,#7C3AED 100%);padding:32px 32px 28px;text-align:center;">
+      <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;letter-spacing:-0.5px;">{{siteName}}</h1>
+      <p style="margin:8px 0 0;color:rgba(255,255,255,0.8);font-size:13px;">Document Shared</p>
+    </div>
+    <!-- Body -->
+    <div style="padding:32px;">
+      <p style="margin:0 0 20px;color:#334155;font-size:15px;"><strong>{{senderName}}</strong> has shared a document with you.</p>
+      <!-- Document Card -->
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <h2 style="margin:0 0 12px;color:#1e293b;font-size:17px;font-weight:700;">{{documentName}}</h2>
+        <table style="width:100%;font-size:13px;color:#64748b;">
+          <tr><td style="padding:3px 0;font-weight:600;width:80px;">Type:</td><td>{{documentType}}</td></tr>
+          <tr><td style="padding:3px 0;font-weight:600;">Version:</td><td>v{{documentVersion}}</td></tr>
+          <tr><td style="padding:3px 0;font-weight:600;">Deal:</td><td>{{dealTitle}}</td></tr>
+          <tr><td style="padding:3px 0;font-weight:600;">Sent by:</td><td>{{senderName}}</td></tr>
+        </table>
+      </div>
+      {{#if message}}
+      <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <p style="margin:0 0 6px;color:#94a3b8;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Message</p>
+        <p style="margin:0;color:#475569;font-size:14px;line-height:1.6;">{{message}}</p>
+      </div>
+      {{/if}}
+      <div style="text-align:center;margin-bottom:24px;">
+        <a href="{{viewUrl}}" style="display:inline-block;background:#5542F6;color:#ffffff;text-decoration:none;padding:12px 32px;border-radius:10px;font-size:14px;font-weight:600;">View Document</a>
+      </div>
+      <p style="margin:0;color:#94a3b8;font-size:12px;text-align:center;">If you have questions, please reply to {{senderEmail}}.</p>
+    </div>
+    <!-- Footer -->
+    <div style="background:#f8fafc;padding:20px 32px;border-top:1px solid #f1f5f9;text-align:center;">
+      <p style="margin:0;color:#94a3b8;font-size:11px;">&copy; {{siteName}} — All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  },
+  {
     slug: "notification",
     name: "General Notification",
     subject: "{{title}} — {{siteName}}",

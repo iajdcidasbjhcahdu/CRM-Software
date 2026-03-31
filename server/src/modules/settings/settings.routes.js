@@ -7,11 +7,10 @@ import { updateSettingsSchema } from "./settings.validation.js";
 
 const router = Router();
 
-// All settings routes are OWNER-only
 router.use(authenticate);
-router.use(authorize("OWNER"));
 
-router.get("/", settingsController.getSettings);
-router.patch("/", validate(updateSettingsSchema), settingsController.updateSettings);
+router.get("/ai", settingsController.getAiSettings);
+router.get("/", authorize("OWNER"), settingsController.getSettings);
+router.patch("/", authorize("OWNER"), validate(updateSettingsSchema), settingsController.updateSettings);
 
 export default router;

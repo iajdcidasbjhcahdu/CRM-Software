@@ -1,19 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { BotIcon, Coins, Database, Globe, LayoutTemplateIcon, Mail, Server } from "lucide-react";
+import { BotIcon, Coins, Database, Globe, LayoutTemplateIcon, Mail, Server, MessageSquareCode } from "lucide-react";
 import SiteSettingsTab from "./SiteSettingsTab";
 import SmtpSettingsTab from "./SmtpSettingsTab";
 import EmailTemplatesTab from "./EmailTemplatesTab";
 import StorageSettingsTab from "./StorageSettingsTab";
+import AiSettingsTab from "./AiSettingsTab";
+import SystemPromptsTab from "./SystemPromptsTab";
 
 const TABS = [
   { id: "site", label: "Site Settings", icon: Globe },
   { id: "smtp", label: "Email Settings", icon: Mail },
   { id: "email-templates", label: "Email Templates", icon: LayoutTemplateIcon },
   { id: "storage", label: "Storage Settings", icon: Database },
-  { id: "payment", label: "Payment Settings", icon: Coins },
+  // { id: "payment", label: "Payment Settings", icon: Coins },
   { id: "ai", label: "AI Settings", icon: BotIcon },
+  { id: "system-prompts", label: "System Prompts", icon: MessageSquareCode },
 ];
 
 export default function SettingsContent({ initialSite, initialSettings }) {
@@ -61,6 +64,8 @@ export default function SettingsContent({ initialSite, initialSettings }) {
         {activeTab === "storage" && (
           <StorageSettingsTab initialData={initialSettings} />
         )}
+        {activeTab === "ai" && <AiSettingsTab initialData={initialSettings} />}
+        {activeTab === "system-prompts" && <SystemPromptsTab />}
       </div>
     </div>
   );

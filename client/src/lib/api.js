@@ -152,6 +152,13 @@ export async function updateSettingsAPI(data, accessToken) {
   });
 }
 
+export async function getAiSettings(accessToken) {
+  return request("/api/settings/ai", {
+    method: "GET",
+    token: accessToken,
+  });
+}
+
 /* ───────── Dashboard Endpoint ───────── */
 
 export async function getDashboardStatsAPI(accessToken, period = "month") {
@@ -517,6 +524,97 @@ export async function deleteNotificationAPI(id, accessToken) {
 
 export async function clearReadNotificationsAPI(accessToken) {
   return request("/api/notifications/clear-read", { method: "DELETE", token: accessToken });
+}
+
+/* ───────── System Prompts ───────── */
+
+export async function getSystemPromptsAPI(accessToken) {
+  return request("/api/system-prompts", { method: "GET", token: accessToken });
+}
+
+export async function getSystemPromptAPI(id, accessToken) {
+  return request(`/api/system-prompts/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function createSystemPromptAPI(data, accessToken) {
+  return request("/api/system-prompts", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateSystemPromptAPI(id, data, accessToken) {
+  return request(`/api/system-prompts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteSystemPromptAPI(id, accessToken) {
+  return request(`/api/system-prompts/${id}`, { method: "DELETE", token: accessToken });
+}
+
+/* ───────── AI ───────── */
+
+export async function aiGenerateAPI(data, accessToken) {
+  return request("/api/ai/generate", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function aiSearchAPI(question, accessToken) {
+  return request("/api/ai/search", {
+    method: "POST",
+    body: JSON.stringify({ question }),
+    token: accessToken,
+  });
+}
+
+/* ───────── Documents ───────── */
+
+export async function getDocumentsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/documents?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getDocumentAPI(id, accessToken) {
+  return request(`/api/documents/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function getDocumentsByDealAPI(dealId, accessToken) {
+  return request(`/api/documents/deal/${dealId}`, { method: "GET", token: accessToken });
+}
+
+export async function createDocumentAPI(data, accessToken) {
+  return request("/api/documents", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateDocumentAPI(id, data, accessToken) {
+  return request(`/api/documents/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteDocumentAPI(id, accessToken) {
+  return request(`/api/documents/${id}`, { method: "DELETE", token: accessToken });
+}
+
+export async function sendDocumentEmailAPI(id, data, accessToken) {
+  return request(`/api/documents/${id}/send-email`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
 }
 
 /* ───────── Generic Authenticated Requests ───────── */

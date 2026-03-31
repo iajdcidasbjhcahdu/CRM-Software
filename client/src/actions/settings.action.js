@@ -6,6 +6,7 @@ import {
   getSiteAPI,
   updateSiteAPI,
   getSettingsAPI,
+  getAiSettings,
   updateSettingsAPI,
   getEmailTemplatesAPI,
   getEmailTemplateAPI,
@@ -65,6 +66,21 @@ export async function getSystemSettings() {
 
   try {
     const res = await getSettingsAPI(accessToken);
+    if (res.success) return res.data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getIsAIEnabled() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+
+  if (!accessToken) return null;
+
+  try {
+    const res = await getAiSettings(accessToken);
     if (res.success) return res.data;
     return null;
   } catch {

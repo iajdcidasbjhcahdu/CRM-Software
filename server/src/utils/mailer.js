@@ -91,7 +91,7 @@ async function getTransporter() {
  * @param {string} [options.text]   - Plain text fallback
  * @param {string} [options.from]   - Override sender (default: SMTP email)
  */
-export async function sendMail({ to, subject, html, text, from }) {
+export async function sendMail({ to, subject, html, text, from, cc, bcc }) {
   const { transporter, fromEmail } = await getTransporter();
 
   const site = await getCachedSite();
@@ -100,6 +100,8 @@ export async function sendMail({ to, subject, html, text, from }) {
   const info = await transporter.sendMail({
     from: from || `"${siteName}" <${fromEmail}>`,
     to,
+    cc,
+    bcc,
     subject,
     html,
     text: text || html.replace(/<[^>]*>/g, ""),

@@ -46,6 +46,18 @@ class SettingsService {
       // Mask storage secret key
       storageSecretKey: data.storageSecretKey ? MASK : null,
       isStorageConfigured: this._checkStorageConfigured(data),
+      // Mask AI API key
+      aiApiKey: data.aiApiKey ? MASK : null,
+      isAiConfigured: !!(data.aiProvider && data.aiProvider !== "NONE" && data.aiApiKey),
+    };
+  }
+
+  async getAiSettings() {
+    const settings = await this.getRawSettings();
+    const { createdAt, updatedAt, ...data } = settings;
+
+    return {
+      isAiConfigured: !!(data.aiProvider && data.aiProvider !== "NONE" && data.aiApiKey),
     };
   }
 
@@ -58,6 +70,7 @@ class SettingsService {
     // Don't overwrite secrets with the mask
     if (data.smtpPassword === MASK) delete data.smtpPassword;
     if (data.storageSecretKey === MASK) delete data.storageSecretKey;
+    if (data.aiApiKey === MASK) delete data.aiApiKey;
 
     // Track if SMTP fields are being changed
     const smtpFieldsChanged = !!(
@@ -105,6 +118,8 @@ class SettingsService {
       ),
       storageSecretKey: result.storageSecretKey ? MASK : null,
       isStorageConfigured: this._checkStorageConfigured(result),
+      aiApiKey: result.aiApiKey ? MASK : null,
+      isAiConfigured: !!(result.aiProvider && result.aiProvider !== "NONE" && result.aiApiKey),
     };
   }
 

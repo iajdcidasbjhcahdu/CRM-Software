@@ -25,6 +25,9 @@ import storageRoutes from "./modules/storage/storage.routes.js";
 import teamRoutes from "./modules/team/team.routes.js";
 import searchRoutes from "./modules/search/search.routes.js";
 import notificationRoutes from "./modules/notification/notification.routes.js";
+import systemPromptRoutes from "./modules/system-prompt/system-prompt.routes.js";
+import aiRoutes from "./modules/ai/ai.routes.js";
+import documentRoutes from "./modules/document/document.routes.js";
 
 const app = express();
 
@@ -93,6 +96,9 @@ app.use("/api/storage", storageRoutes);
 app.use("/api/teams", teamRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/system-prompts", systemPromptRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/documents", documentRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

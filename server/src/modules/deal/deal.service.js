@@ -35,6 +35,21 @@ const DEAL_INCLUDE = {
     },
     orderBy: { createdAt: "asc" },
   },
+  documents: {
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      version: true,
+      fileUrl: true,
+      isAiGenerated: true,
+      createdAt: true,
+      addedBy: {
+        select: { id: true, firstName: true, lastName: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  },
 };
 
 class DealService {

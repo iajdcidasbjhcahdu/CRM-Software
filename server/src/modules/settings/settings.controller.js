@@ -12,6 +12,11 @@ class SettingsController {
     return ok(res, "Settings retrieved", settings);
   });
 
+  getAiSettings = catchAsync(async (_req, res) => {
+    const settings = await settingsService.getAiSettings();
+    return ok(res, "AI Settings retrieved", settings);
+  });
+
   /**
    * PATCH /api/settings
    * Protected — OWNER only. Updates system settings.
