@@ -43,6 +43,7 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
   const [toast, setToast] = useState(null);
 
   const [step, setStep] = useState(STEPS.CHOOSE);
+  const [saving, setSaving] = useState(false);
   const [aiInstructions, setAiInstructions] = useState("");
   const [aiResult, setAiResult] = useState(null);
   const [createdDocument, setCreatedDocument] = useState(null);
@@ -107,21 +108,31 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
   };
 
   // ─── Save AI Proposal as Document ─────────────────
-  const handleSaveAiProposal = () => {
-    startTransition(async () => {
+  const handleSaveAiProposal = async () => {
+    setSaving(true);
+    try {
       // Create an HTML document from the AI result
       const proposalHtml = buildProposalHtml(aiResult, deal);
 
+      // Sanitise filename — strip non-ASCII chars and special characters for HTTP header safety
+      const safeName = deal.title
+        .replace(/[^\w\s-]/g, "")       // remove non-word chars (includes em dashes, etc.)
+        .replace(/\s+/g, "-")           // spaces → hyphens
+        .replace(/-+/g, "-")            // collapse multiple hyphens
+        .substring(0, 80)               // limit length
+        || "Proposal";
+
       // Upload the HTML as a blob to storage
       const blob = new Blob([proposalHtml], { type: "text/html" });
-      const file = new File([blob], `${deal.title.replace(/\s+/g, "-")}-Proposal.html`, {
+      const file = new File([blob], `${safeName}-Proposal.html`, {
         type: "text/html",
       });
 
       const uploadResult = await upload(file);
 
       if (!uploadResult) {
-        showToast("error", uploadError || "Failed to upload proposal");
+        // uploadError state may not have updated yet, so read it after a tick
+        showToast("error", "Failed to upload proposal. Please try again.");
         return;
       }
 
@@ -133,7 +144,7 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
         fileKey: uploadResult.key,
         mimeType: "text/html",
         fileSize: blob.size,
-        description: aiResult.executiveSummary || null,
+        description: stringify(aiResult.executiveSummary) || null,
         isAiGenerated: true,
         dealId: deal.id,
         clientId: deal.client?.id || null,
@@ -147,7 +158,12 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
       } else {
         showToast("error", docResult.error || "Failed to save proposal");
       }
-    });
+    } catch (err) {
+      console.error("[ProposalContent] Save failed:", err);
+      showToast("error", err.message || "Failed to save proposal");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ─── Manual Upload Flow ───────────────────────────
@@ -156,17 +172,18 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
     if (file) setSelectedFile(file);
   };
 
-  const handleUploadProposal = () => {
+  const handleUploadProposal = async () => {
     if (!selectedFile) {
       showToast("error", "Please select a file");
       return;
     }
 
-    startTransition(async () => {
+    setSaving(true);
+    try {
       const uploadResult = await upload(selectedFile);
 
       if (!uploadResult) {
-        showToast("error", uploadError || "Upload failed");
+        showToast("error", "Upload failed. Please try again.");
         return;
       }
 
@@ -190,7 +207,12 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
       } else {
         showToast("error", docResult.error || "Failed to save document");
       }
-    });
+    } catch (err) {
+      console.error("[ProposalContent] Upload failed:", err);
+      showToast("error", err.message || "Upload failed");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // ─── Send Email ────────────────────────────────────
@@ -434,10 +456,10 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
             </button>
             <button
               onClick={handleSaveAiProposal}
-              disabled={isPending || uploading}
+              disabled={saving || uploading}
               className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-[#5542F6] rounded-xl shadow-lg shadow-indigo-500/20 hover:bg-[#4636d4] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPending || uploading ? (
+              {saving || uploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Saving...
@@ -535,10 +557,10 @@ export default function ProposalContent({ initialDeal, isAiConfigured }) {
             </button>
             <button
               onClick={handleUploadProposal}
-              disabled={isPending || uploading || !selectedFile}
+              disabled={saving || uploading || !selectedFile}
               className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-emerald-500 rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isPending || uploading ? (
+              {saving || uploading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Uploading...
