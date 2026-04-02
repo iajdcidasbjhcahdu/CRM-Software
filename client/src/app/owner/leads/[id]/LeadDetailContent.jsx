@@ -34,6 +34,8 @@ import Badge from "@/components/ui/Badge";
 import Toast from "@/components/ui/Toast";
 import SettingsInput from "@/components/settings/SettingsInput";
 import SettingsSelect from "@/components/settings/SettingsSelect";
+import MeetingsSection from "@/components/meetings/MeetingsSection";
+import FollowUpsSection from "@/components/followups/FollowUpsSection";
 
 /* ─── Status flow config ─── */
 const STATUS_TRANSITIONS = {
@@ -71,7 +73,7 @@ function getStepIndex(status) {
   return PIPELINE_STEPS.indexOf(status);
 }
 
-export default function LeadDetailContent({ initialLead }) {
+export default function LeadDetailContent({ initialLead, initialMeetings = [], initialFollowUps = [] }) {
   const router = useRouter();
   const { format, formatCompact } = useSite();
   const [lead, setLead] = useState(initialLead);
@@ -456,6 +458,23 @@ export default function LeadDetailContent({ initialLead }) {
           </div>
         </div>
       )}
+
+      {/* ═══ Follow-Ups ═══ */}
+      {lead.status !== "CONVERTED" && (
+        <FollowUpsSection
+          followUps={initialFollowUps}
+          leadId={lead.id}
+          showToast={showToast}
+        />
+      )}
+
+      {/* ═══ Meetings ═══ */}
+      <MeetingsSection
+        meetings={initialMeetings}
+        entityType="lead"
+        entityId={lead.id}
+        showToast={showToast}
+      />
 
       {/* ═══ Notes & People ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

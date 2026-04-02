@@ -145,6 +145,12 @@ model User {
   // Documents
   documents      Document[] @relation("DocumentCreator")
 
+  // Meetings
+  createdMeetings Meeting[] @relation("MeetingCreator")
+
+  // Follow-ups
+  createdFollowUps FollowUp[] @relation("FollowUpCreator")
+
   @@index([clientId])
   @@map("users")
 }
@@ -211,6 +217,12 @@ model Lead {
   // Converted deal
   deal Deal?
 
+  // Meetings
+  meetings Meeting[]
+
+  // Follow-ups
+  followUps FollowUp[]
+
   // Duplicate prevention
   @@unique([email, companyName], map: "leads_email_company_unique")
 
@@ -258,6 +270,9 @@ model Deal {
 
   // Documents (proposals, etc.)
   documents       Document[]
+
+  // Meetings
+  meetings        Meeting[]
 
   wonAt           DateTime? @map("won_at")
   createdAt       DateTime  @default(now()) @map("created_at")
@@ -349,6 +364,9 @@ model Project {
 
   // Documents
   documents       Document[]
+
+  // Meetings
+  meetings        Meeting[]
 
   createdAt       DateTime      @default(now()) @map("created_at")
   updatedAt       DateTime      @updatedAt @map("updated_at")
@@ -692,6 +710,108 @@ model Document {
   @@index([type])
   @@index([createdAt])
   @@map("documents")
+}
+
+// ─── Meeting ─────────────────────────────────────────
+
+enum MeetingMode {
+  VIRTUAL
+  IN_PERSON
+  PHONE_CALL
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+model Meeting {
+  id              String        @id @default(cuid())
+  title           String
+  description     String?       @db.Text
+  mode            MeetingMode   @default(VIRTUAL)
+  status          MeetingStatus @default(SCHEDULED)
+  link            String?       // Meet link, phone number, or place
+  scheduledAt     DateTime      @map("scheduled_at")
+  duration        Int?          // Duration in minutes
+  notes           String?       @db.Text
+  outcome         String?       @db.Text
+  isFollowUp      Boolean       @default(false) @map("is_follow_up")
+  parentMeetingId String?       @map("parent_meeting_id")
+  parentMeeting   Meeting?      @relation("MeetingFollowUps", fields: [parentMeetingId], references: [id], onDelete: SetNull)
+  followUpMeetings Meeting[]    @relation("MeetingFollowUps")
+
+  // Polymorphic: attach to lead, deal, or project
+  leadId          String?       @map("lead_id")
+  lead            Lead?         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  dealId          String?       @map("deal_id")
+  deal            Deal?         @relation(fields: [dealId], references: [id], onDelete: Cascade)
+
+  projectId       String?       @map("project_id")
+  project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // Who created this meeting
+  createdById     String        @map("created_by_id")
+  createdBy       User          @relation("MeetingCreator", fields: [createdById], references: [id])
+
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  @@index([leadId])
+  @@index([dealId])
+  @@index([projectId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([createdById])
+  @@map("meetings")
+}
+
+// ─── Lead Follow-Up ──────────────────────────────────
+
+enum FollowUpType {
+  CALL
+  EMAIL
+  MEETING
+  TASK
+  OTHER
+}
+
+enum FollowUpStatus {
+  PENDING
+  COMPLETED
+  SKIPPED
+  OVERDUE
+}
+
+model FollowUp {
+  id          String         @id @default(cuid())
+  title       String
+  type        FollowUpType   @default(CALL)
+  status      FollowUpStatus @default(PENDING)
+  dueAt       DateTime       @map("due_at")
+  completedAt DateTime?      @map("completed_at")
+  notes       String?        @db.Text
+  outcome     String?        @db.Text
+
+  // Parent lead
+  leadId      String         @map("lead_id")
+  lead        Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Who created this follow-up
+  createdById String         @map("created_by_id")
+  createdBy   User           @relation("FollowUpCreator", fields: [createdById], references: [id])
+
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  @@index([leadId])
+  @@index([status])
+  @@index([dueAt])
+  @@index([createdById])
+  @@map("follow_ups")
 }
 
 // ─── Email Template ──────────────────────────────────

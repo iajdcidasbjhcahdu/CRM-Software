@@ -1,5 +1,6 @@
 import storageService from "./storage.service.js";
 import catchAsync from "../../utils/catchAsync.js";
+import { ok } from "../../utils/apiResponse.js";
 
 class StorageController {
   /**
@@ -14,7 +15,7 @@ class StorageController {
   getUploadConfig = catchAsync(async (req, res) => {
     const { filename, contentType, fileSize } = req.query;
     const config = await storageService.getUploadConfig(filename, contentType, fileSize);
-    res.json({ success: true, data: config });
+    return ok(res, "Upload config retrieved", config);
   });
 
   /**
@@ -27,7 +28,7 @@ class StorageController {
    */
   uploadLocal = catchAsync(async (req, res) => {
     const result = await storageService.handleLocalUpload(req);
-    res.json({ success: true, data: result });
+    return ok(res, "File uploaded successfully", result);
   });
 
   /**

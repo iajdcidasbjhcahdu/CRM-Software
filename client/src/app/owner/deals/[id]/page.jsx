@@ -1,9 +1,13 @@
 import { getDeal } from "@/actions/deals.action";
+import { getMeetingsByDeal } from "@/actions/meetings.action";
 import DealDetailContent from "./DealDetailContent";
 
 export default async function DealDetailPage({ params }) {
   const { id } = await params;
-  const result = await getDeal(id);
+  const [result, meetingsResult] = await Promise.all([
+    getDeal(id),
+    getMeetingsByDeal(id),
+  ]);
 
   if (!result.success) {
     return (
@@ -13,5 +17,10 @@ export default async function DealDetailPage({ params }) {
     );
   }
 
-  return <DealDetailContent initialDeal={result.data} />;
+  return (
+    <DealDetailContent
+      initialDeal={result.data}
+      initialMeetings={meetingsResult.data || []}
+    />
+  );
 }

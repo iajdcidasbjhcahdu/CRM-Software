@@ -1,68 +1,42 @@
 import documentService from "./document.service.js";
+import catchAsync from "../../utils/catchAsync.js";
+import { ok, created } from "../../utils/apiResponse.js";
 
 class DocumentController {
-  async create(req, res, next) {
-    try {
-      const document = await documentService.createDocument(req.body, req.user.id);
-      res.status(201).json({ success: true, data: document });
-    } catch (err) {
-      next(err);
-    }
-  }
+  create = catchAsync(async (req, res) => {
+    const document = await documentService.createDocument(req.body, req.user.id);
+    return created(res, "Document created successfully", document);
+  });
 
-  async list(req, res, next) {
-    try {
-      const result = await documentService.listDocuments(req.query);
-      res.json({ success: true, data: result });
-    } catch (err) {
-      next(err);
-    }
-  }
+  list = catchAsync(async (req, res) => {
+    const result = await documentService.listDocuments(req.query);
+    return ok(res, "Documents retrieved", result);
+  });
 
-  async getById(req, res, next) {
-    try {
-      const document = await documentService.getDocumentById(req.params.id);
-      res.json({ success: true, data: document });
-    } catch (err) {
-      next(err);
-    }
-  }
+  getById = catchAsync(async (req, res) => {
+    const document = await documentService.getDocumentById(req.params.id);
+    return ok(res, "Document retrieved", document);
+  });
 
-  async update(req, res, next) {
-    try {
-      const document = await documentService.updateDocument(req.params.id, req.body);
-      res.json({ success: true, data: document });
-    } catch (err) {
-      next(err);
-    }
-  }
+  update = catchAsync(async (req, res) => {
+    const document = await documentService.updateDocument(req.params.id, req.body);
+    return ok(res, "Document updated successfully", document);
+  });
 
-  async delete(req, res, next) {
-    try {
-      await documentService.deleteDocument(req.params.id);
-      res.json({ success: true, message: "Document deleted" });
-    } catch (err) {
-      next(err);
-    }
-  }
+  delete = catchAsync(async (req, res) => {
+    await documentService.deleteDocument(req.params.id);
+    return ok(res, "Document deleted successfully");
+  });
 
-  async getByDeal(req, res, next) {
-    try {
-      const documents = await documentService.getDocumentsByDeal(req.params.dealId);
-      res.json({ success: true, data: documents });
-    } catch (err) {
-      next(err);
-    }
-  }
+  getByDeal = catchAsync(async (req, res) => {
+    const documents = await documentService.getDocumentsByDeal(req.params.dealId);
+    return ok(res, "Documents retrieved", documents);
+  });
 
-  async sendEmail(req, res, next) {
-    try {
-      const result = await documentService.sendDocumentEmail(req.params.id, req.body);
-      res.json({ success: true, data: result });
-    } catch (err) {
-      next(err);
-    }
-  }
+  sendEmail = catchAsync(async (req, res) => {
+    const result = await documentService.sendDocumentEmail(req.params.id, req.body);
+    return ok(res, "Document email sent successfully", result);
+  });
 }
 
 export default new DocumentController();

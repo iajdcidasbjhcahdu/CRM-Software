@@ -617,6 +617,84 @@ export async function sendDocumentEmailAPI(id, data, accessToken) {
   });
 }
 
+/* ───────── Meetings ───────── */
+
+export async function getMeetingsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/meetings?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getMeetingAPI(id, accessToken) {
+  return request(`/api/meetings/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function getMeetingsByLeadAPI(leadId, accessToken) {
+  return request(`/api/meetings/lead/${leadId}`, { method: "GET", token: accessToken });
+}
+
+export async function getMeetingsByDealAPI(dealId, accessToken) {
+  return request(`/api/meetings/deal/${dealId}`, { method: "GET", token: accessToken });
+}
+
+export async function getMeetingsByProjectAPI(projectId, accessToken) {
+  return request(`/api/meetings/project/${projectId}`, { method: "GET", token: accessToken });
+}
+
+export async function createMeetingAPI(data, accessToken) {
+  return request("/api/meetings", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateMeetingAPI(id, data, accessToken) {
+  return request(`/api/meetings/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteMeetingAPI(id, accessToken) {
+  return request(`/api/meetings/${id}`, { method: "DELETE", token: accessToken });
+}
+
+/* ───────── Follow-Ups ───────── */
+
+export async function getFollowUpsAPI(params, accessToken) {
+  const query = new URLSearchParams(params).toString();
+  return request(`/api/follow-ups?${query}`, { method: "GET", token: accessToken });
+}
+
+export async function getFollowUpAPI(id, accessToken) {
+  return request(`/api/follow-ups/${id}`, { method: "GET", token: accessToken });
+}
+
+export async function getFollowUpsByLeadAPI(leadId, accessToken) {
+  return request(`/api/follow-ups/lead/${leadId}`, { method: "GET", token: accessToken });
+}
+
+export async function createFollowUpAPI(data, accessToken) {
+  return request("/api/follow-ups", {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function updateFollowUpAPI(id, data, accessToken) {
+  return request(`/api/follow-ups/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
+export async function deleteFollowUpAPI(id, accessToken) {
+  return request(`/api/follow-ups/${id}`, { method: "DELETE", token: accessToken });
+}
+
 /* ───────── Generic Authenticated Requests ───────── */
 
 export async function apiGet(endpoint, accessToken) {

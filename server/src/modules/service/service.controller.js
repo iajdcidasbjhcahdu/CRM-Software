@@ -1,34 +1,35 @@
 import catchAsync from "../../utils/catchAsync.js";
+import { ok, created } from "../../utils/apiResponse.js";
 import serviceService from "./service.service.js";
 
 const createService = catchAsync(async (req, res) => {
   const service = await serviceService.createService(req.body);
-  res.status(201).json({ success: true, data: service });
+  return created(res, "Service created successfully", service);
 });
 
 const listServices = catchAsync(async (req, res) => {
   const result = await serviceService.listServices(req.query);
-  res.json({ success: true, data: result });
+  return ok(res, "Services retrieved", result);
 });
 
 const getService = catchAsync(async (req, res) => {
   const service = await serviceService.getServiceById(req.params.id);
-  res.json({ success: true, data: service });
+  return ok(res, "Service retrieved", service);
 });
 
 const updateService = catchAsync(async (req, res) => {
   const service = await serviceService.updateService(req.params.id, req.body);
-  res.json({ success: true, data: service });
+  return ok(res, "Service updated successfully", service);
 });
 
 const deleteService = catchAsync(async (req, res) => {
   await serviceService.deleteService(req.params.id);
-  res.json({ success: true, message: "Service deleted" });
+  return ok(res, "Service deleted successfully");
 });
 
 const getActiveServices = catchAsync(async (req, res) => {
   const services = await serviceService.getActiveServices();
-  res.json({ success: true, data: services });
+  return ok(res, "Active services retrieved", services);
 });
 
 export default { createService, listServices, getService, updateService, deleteService, getActiveServices };

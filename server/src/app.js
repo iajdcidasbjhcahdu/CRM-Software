@@ -28,6 +28,8 @@ import notificationRoutes from "./modules/notification/notification.routes.js";
 import systemPromptRoutes from "./modules/system-prompt/system-prompt.routes.js";
 import aiRoutes from "./modules/ai/ai.routes.js";
 import documentRoutes from "./modules/document/document.routes.js";
+import meetingRoutes from "./modules/meeting/meeting.routes.js";
+import followUpRoutes from "./modules/follow-up/follow-up.routes.js";
 
 const app = express();
 
@@ -99,6 +101,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/system-prompts", systemPromptRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/meetings", meetingRoutes);
+app.use("/api/follow-ups", followUpRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

@@ -1,3 +1,5 @@
+// import config from "./config/index.js";
+
 export class ApiResponse {
   constructor(statusCode, message, data = null) {
     this.success = statusCode >= 200 && statusCode < 300;
@@ -9,6 +11,9 @@ export class ApiResponse {
   send(res) {
     const body = { success: this.success, message: this.message };
     if (this.data !== null) body.data = this.data;
+
+    console.log("Sending Response: ", body);
+
     return res.status(this.statusCode).json(body);
   }
 }

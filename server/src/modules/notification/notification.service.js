@@ -3,6 +3,17 @@ import { ApiError } from "../../utils/apiError.js";
 import { sendMail } from "../../utils/mailer.js";
 import emailTemplateService from "../email-template/email-template.service.js";
 
+const USER_ROLES = [
+  "OWNER",
+  "ADMIN",
+  "SALES_MANAGER",
+  "ACCOUNT_MANAGER",
+  "FINANCE_MANAGER",
+  "HR",
+  "EMPLOYEE",
+  "CLIENT"
+];
+
 class NotificationService {
   /**
    * The main callable function — creates a notification and optionally sends email.
@@ -22,8 +33,11 @@ class NotificationService {
     description,
     type = "INFO",
     channel = "IN_APP",
-    linkUrl = "/",
+    linkUrl = null,
   }) {
+
+    linkUrl = linkUrl && linkUrl?.trim();
+
     // Validate user exists
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -39,6 +53,15 @@ class NotificationService {
     let emailSent = false;
 
     let link = (linkUrl == null || linkUrl?.trim() == "" || linkUrl == undefined) ? "/" : linkUrl;
+
+    // CHeck if link is like ROLE/.... and ROLE is in (USER_ROLE) then replace ROLE by rolic
+    const parts = link.split("/");
+    console.log("Link URL: ", link);
+    console.log("Parts: ", parts);
+    if(parts.length > 1 && USER_ROLES.includes(parts[1].toUpperCase())) {
+      parts[1] = "rolic";
+      link = parts.join("/");
+    }
 
     // 1. Save in-app notification
     if (shouldSaveNotification) {

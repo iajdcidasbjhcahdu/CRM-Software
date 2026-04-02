@@ -1,9 +1,13 @@
 import { getProject } from "@/actions/projects.action";
+import { getMeetingsByProject } from "@/actions/meetings.action";
 import ProjectDetailContent from "./ProjectDetailContent";
 
 export default async function ProjectDetailPage({ params }) {
   const { id } = await params;
-  const result = await getProject(id);
+  const [result, meetingsResult] = await Promise.all([
+    getProject(id),
+    getMeetingsByProject(id),
+  ]);
 
   if (!result.success) {
     return (
@@ -13,5 +17,10 @@ export default async function ProjectDetailPage({ params }) {
     );
   }
 
-  return <ProjectDetailContent initialProject={result.data} />;
+  return (
+    <ProjectDetailContent
+      initialProject={result.data}
+      initialMeetings={meetingsResult.data || []}
+    />
+  );
 }

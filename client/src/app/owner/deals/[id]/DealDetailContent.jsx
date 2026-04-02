@@ -37,6 +37,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import Badge from "@/components/ui/Badge";
 import Toast from "@/components/ui/Toast";
 import SettingsSelect from "@/components/settings/SettingsSelect";
+import MeetingsSection from "@/components/meetings/MeetingsSection";
 
 /* ─── Stage flow config ─── */
 const STAGE_TRANSITIONS = {
@@ -70,7 +71,7 @@ function getStepIndex(stage) {
   return PIPELINE_STEPS.indexOf(stage);
 }
 
-export default function DealDetailContent({ initialDeal }) {
+export default function DealDetailContent({ initialDeal, initialMeetings = [] }) {
   const router = useRouter();
   const { format, formatCompact } = useSite();
   const [deal, setDeal] = useState(initialDeal);
@@ -642,6 +643,14 @@ export default function DealDetailContent({ initialDeal }) {
           </div>
         )}
       </div>
+
+      {/* ═══ Meetings ═══ */}
+      <MeetingsSection
+        meetings={initialMeetings}
+        entityType="deal"
+        entityId={deal.id}
+        showToast={showToast}
+      />
 
       {/* ═══ Notes & People ═══ */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,4 +1,5 @@
 import { getDashboardStats } from "./dashboard.service.js";
+import { ok } from "../../utils/apiResponse.js";
 
 /**
  * GET /api/dashboard/stats?period=month|year|today|all
@@ -11,11 +12,7 @@ export async function getStats(req, res, next) {
     const safePeriod = allowed.includes(period) ? period : "month";
 
     const stats = await getDashboardStats(safePeriod);
-    res.json({
-      success: true,
-      message: "Dashboard statistics fetched successfully",
-      data: stats,
-    });
+    return ok(res, "Dashboard statistics fetched successfully", stats);
   } catch (error) {
     next(error);
   }

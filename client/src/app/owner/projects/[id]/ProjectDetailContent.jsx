@@ -29,6 +29,8 @@ import {
 import { useSite } from "@/context/SiteContext";
 import PageHeader from "@/components/ui/PageHeader";
 import Badge from "@/components/ui/Badge";
+import MeetingsSection from "@/components/meetings/MeetingsSection";
+import Toast from "@/components/ui/Toast";
 
 const STATUS_COLORS = {
   NOT_STARTED: "from-slate-500 to-gray-600",
@@ -132,9 +134,15 @@ function AvatarBadge({ initials, name, label }) {
   );
 }
 
-export default function ProjectDetailContent({ initialProject }) {
+export default function ProjectDetailContent({ initialProject, initialMeetings = [] }) {
   const [project] = useState(initialProject);
   const { format } = useSite();
+  const [toast, setToast] = useState(null);
+
+  const showToast = (type, message) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const formatDate = (date) => {
     if (!date) return "—";
@@ -174,6 +182,8 @@ export default function ProjectDetailContent({ initialProject }) {
 
   return (
     <div className="flex flex-col gap-6 w-full">
+      {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
+
       {/* Page Header */}
       <PageHeader
         title="Project Details"
@@ -514,6 +524,14 @@ export default function ProjectDetailContent({ initialProject }) {
           </div>
         </div>
       )}
+
+      {/* ═══ Meetings ═══ */}
+      <MeetingsSection
+        meetings={initialMeetings}
+        entityType="project"
+        entityId={project.id}
+        showToast={showToast}
+      />
 
       {/* Notes Section */}
       <div className="bg-white dark:bg-slate-950 rounded-[24px] p-6 lg:p-8 border border-slate-100 dark:border-slate-800 shadow-sm dark:shadow-none shadow-slate-200/50 dark:shadow-none">
