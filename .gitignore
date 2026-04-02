@@ -189,3 +189,5 @@ next-env.d.ts
 *.doc*
 
 uploads/
+
+.claude

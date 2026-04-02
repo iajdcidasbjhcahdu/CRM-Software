@@ -127,7 +127,7 @@ class MeetingService {
       }
 
       // Remove the creator — they already know about the meeting
-      // notifyUserIds.delete(createdById);
+      notifyUserIds.delete(createdById);
 
       if (notifyUserIds.size > 0) {
         // Build context-aware description
