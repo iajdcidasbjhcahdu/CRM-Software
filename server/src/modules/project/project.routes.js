@@ -14,7 +14,7 @@ const router = Router();
 
 router.use(authenticate);
 
-const projectAccess = authorize("OWNER", "ADMIN", "ACCOUNT_MANAGER", "SALES_MANAGER");
+const projectAccess = authorize("OWNER", "ADMIN", "ACCOUNT_MANAGER", "SALES_MANAGER", "CLIENT");
 
 router.post("/", authorize("OWNER", "ADMIN", "ACCOUNT_MANAGER"), validate(createProjectSchema), projectController.createProject);
 router.get("/", projectAccess, validate(listProjectsSchema), projectController.listProjects);

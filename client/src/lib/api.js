@@ -169,6 +169,13 @@ export async function getDashboardStatsAPI(accessToken, period = "month") {
   });
 }
 
+export async function getClientDashboardStatsAPI(accessToken) {
+  return request("/api/dashboard/client-stats", {
+    method: "GET",
+    token: accessToken,
+  });
+}
+
 /* ───────── Client Endpoints ───────── */
 
 export async function getClientsAPI(params, accessToken) {

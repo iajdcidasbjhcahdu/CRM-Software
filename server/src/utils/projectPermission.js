@@ -32,11 +32,23 @@ export async function checkProjectPermission(userId, projectId, resource, action
   // 2. Check if user is the project's account manager
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { accountManagerId: true },
+    select: { accountManagerId: true, clientId: true },
   });
 
   if (!project) return false;
   if (project.accountManagerId === userId) return true;
+
+  // 2.5 CLIENT user whose company owns the project → view + comment only
+  if (user.role === "CLIENT") {
+    const fullUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { clientId: true },
+    });
+    if (fullUser?.clientId && fullUser.clientId === project.clientId) {
+      if (["view", "comment"].includes(action)) return true;
+    }
+    return false;
+  }
 
   // 3. Get all teams assigned to this project
   const projectTeams = await prisma.projectTeam.findMany({

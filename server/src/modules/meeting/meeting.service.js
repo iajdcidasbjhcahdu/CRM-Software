@@ -164,7 +164,7 @@ class MeetingService {
     return meeting;
   }
 
-  async listMeetings({ page, limit, mode, status, leadId, dealId, projectId, search, sortBy, sortOrder }) {
+  async listMeetings({ page, limit, mode, status, leadId, dealId, projectId, projectIds, search, sortBy, sortOrder }) {
     const skip = (page - 1) * limit;
     const where = {};
 
@@ -173,6 +173,7 @@ class MeetingService {
     if (leadId) where.leadId = leadId;
     if (dealId) where.dealId = dealId;
     if (projectId) where.projectId = projectId;
+    if (projectIds?.length) where.projectId = { in: projectIds };
 
     if (search) {
       where.OR = [

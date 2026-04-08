@@ -1,6 +1,7 @@
 import documentService from "./document.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 import { ok, created } from "../../utils/apiResponse.js";
+import prisma from "../../utils/prisma.js";
 
 class DocumentController {
   create = catchAsync(async (req, res) => {
@@ -9,7 +10,20 @@ class DocumentController {
   });
 
   list = catchAsync(async (req, res) => {
-    const result = await documentService.listDocuments(req.query);
+    const query = { ...req.query };
+
+    // CLIENT users only see documents from their own projects
+    if (req.user.role === "CLIENT") {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { clientId: true },
+      });
+      if (user?.clientId) {
+        query.clientId = user.clientId;
+      }
+    }
+
+    const result = await documentService.listDocuments(query);
     return ok(res, "Documents retrieved", result);
   });
 

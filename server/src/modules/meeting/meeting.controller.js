@@ -1,6 +1,7 @@
 import meetingService from "./meeting.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 import { ok, created } from "../../utils/apiResponse.js";
+import prisma from "../../utils/prisma.js";
 
 class MeetingController {
   create = catchAsync(async (req, res) => {
@@ -9,7 +10,25 @@ class MeetingController {
   });
 
   list = catchAsync(async (req, res) => {
-    const result = await meetingService.listMeetings(req.query);
+    const query = { ...req.query };
+
+    // CLIENT users only see meetings from their own projects
+    if (req.user.role === "CLIENT") {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user.id },
+        select: { clientId: true },
+      });
+      if (user?.clientId) {
+        // Get project IDs belonging to this client
+        const projects = await prisma.project.findMany({
+          where: { clientId: user.clientId },
+          select: { id: true },
+        });
+        query.projectIds = projects.map((p) => p.id);
+      }
+    }
+
+    const result = await meetingService.listMeetings(query);
     return ok(res, "Meetings retrieved", result);
   });
 
