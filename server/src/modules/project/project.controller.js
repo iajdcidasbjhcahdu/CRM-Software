@@ -41,6 +41,11 @@ class ProjectController {
       query.projectIds = pIds;
     }
 
+    // ACCOUNT_MANAGER users only see projects they manage
+    if (req.user.role === "ACCOUNT_MANAGER") {
+      query.accountManagerId = req.user.id;
+    }
+
     const result = await projectService.listProjects(query);
     return ok(res, "Projects retrieved", result);
   });
@@ -63,6 +68,13 @@ class ProjectController {
     if (req.user.role === "EMPLOYEE") {
       const pIds = await getUserProjectIds(req.user.id);
       if (!pIds.includes(req.params.id)) {
+        throw ApiError.forbidden("You do not have access to this project");
+      }
+    }
+
+    // ACCOUNT_MANAGER can only view projects they manage
+    if (req.user.role === "ACCOUNT_MANAGER") {
+      if (project.accountManagerId !== req.user.id) {
         throw ApiError.forbidden("You do not have access to this project");
       }
     }

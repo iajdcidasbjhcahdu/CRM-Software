@@ -190,6 +190,13 @@ export async function getSalesDashboardStatsAPI(accessToken) {
   });
 }
 
+export async function getAccountDashboardStatsAPI(accessToken) {
+  return request("/api/dashboard/account-stats", {
+    method: "GET",
+    token: accessToken,
+  });
+}
+
 /* ───────── Client Endpoints ───────── */
 
 export async function getClientsAPI(params, accessToken) {

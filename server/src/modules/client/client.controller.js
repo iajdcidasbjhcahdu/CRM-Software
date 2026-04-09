@@ -14,7 +14,14 @@ class ClientController {
   });
 
   listClients = catchAsync(async (req, res) => {
-    const result = await clientService.listClients(req.query);
+    const query = { ...req.query };
+
+    // ACCOUNT_MANAGER only sees their assigned clients
+    if (req.user.role === "ACCOUNT_MANAGER") {
+      query.accountManagerId = req.user.id;
+    }
+
+    const result = await clientService.listClients(query);
     return ok(res, "Clients retrieved", result);
   });
 

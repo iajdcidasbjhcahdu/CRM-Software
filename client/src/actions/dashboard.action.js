@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { getDashboardStatsAPI, getClientDashboardStatsAPI, getEmployeeDashboardStatsAPI, getSalesDashboardStatsAPI } from "@/lib/api";
+import { getDashboardStatsAPI, getClientDashboardStatsAPI, getEmployeeDashboardStatsAPI, getSalesDashboardStatsAPI, getAccountDashboardStatsAPI } from "@/lib/api";
 
 /**
  * Fetches dashboard statistics from the backend.
@@ -77,6 +77,26 @@ export async function getSalesDashboardStats() {
 
   try {
     const res = await getSalesDashboardStatsAPI(accessToken);
+    if (res.success) return res.data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetches ACCOUNT_MANAGER portal dashboard statistics.
+ */
+export async function getAccountDashboardStats() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+
+  if (!accessToken) {
+    return null;
+  }
+
+  try {
+    const res = await getAccountDashboardStatsAPI(accessToken);
     if (res.success) return res.data;
     return null;
   } catch {

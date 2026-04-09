@@ -37,6 +37,15 @@ class MeetingController {
       }
     }
 
+    // ACCOUNT_MANAGER only sees meetings from their managed projects
+    if (req.user.role === "ACCOUNT_MANAGER") {
+      const projects = await prisma.project.findMany({
+        where: { accountManagerId: req.user.id },
+        select: { id: true },
+      });
+      query.projectIds = projects.map((p) => p.id);
+    }
+
     const result = await meetingService.listMeetings(query);
     return ok(res, "Meetings retrieved", result);
   });

@@ -632,3 +632,107 @@ export async function getSalesDashboardStats() {
     upcomingMeetings,
   };
 }
+
+/**
+ * Fetches dashboard statistics for an Account Manager.
+ * Scoped to clients and projects they manage.
+ *
+ * @param {string} userId - The account manager's user ID
+ */
+export async function getAccountDashboardStats(userId) {
+  const now = new Date();
+
+  // Get managed project IDs
+  const managedProjects = await prisma.project.findMany({
+    where: { accountManagerId: userId },
+    select: { id: true },
+  });
+  const pIds = managedProjects.map((p) => p.id);
+
+  const [
+    totalClients,
+    activeClients,
+    totalProjects,
+    activeProjects,
+    totalTasks,
+    completedTasks,
+    inReviewTasks,
+    upcomingMilestones,
+    recentDocuments,
+    upcomingMeetings,
+    clientsList,
+    projectsList,
+  ] = await Promise.all([
+    prisma.client.count({ where: { accountManagerId: userId } }),
+    prisma.client.count({ where: { accountManagerId: userId, status: "ACTIVE" } }),
+
+    prisma.project.count({ where: { accountManagerId: userId } }),
+    prisma.project.count({ where: { accountManagerId: userId, status: "IN_PROGRESS" } }),
+
+    prisma.task.count({ where: { projectId: { in: pIds } } }),
+    prisma.task.count({ where: { projectId: { in: pIds }, status: { in: ["COMPLETED", "REVIEWED"] } } }),
+    prisma.task.count({ where: { projectId: { in: pIds }, status: "IN_REVIEW" } }),
+
+    prisma.milestone.findMany({
+      where: { projectId: { in: pIds }, status: { in: ["PENDING", "IN_PROGRESS"] } },
+      take: 5,
+      orderBy: { dueDate: "asc" },
+      select: {
+        id: true, title: true, status: true, dueDate: true,
+        project: { select: { id: true, name: true } },
+      },
+    }),
+
+    prisma.document.findMany({
+      where: { projectId: { in: pIds } },
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true, name: true, type: true, fileUrl: true, requiresSignature: true, isSigned: true, createdAt: true,
+        project: { select: { id: true, name: true } },
+      },
+    }),
+
+    prisma.meeting.findMany({
+      where: { projectId: { in: pIds }, scheduledAt: { gte: now }, status: "SCHEDULED" },
+      take: 5,
+      orderBy: { scheduledAt: "asc" },
+      select: {
+        id: true, title: true, mode: true, status: true, scheduledAt: true, duration: true,
+        project: { select: { id: true, name: true } },
+      },
+    }),
+
+    prisma.client.findMany({
+      where: { accountManagerId: userId },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+      select: {
+        id: true, companyName: true, contactName: true, status: true,
+        _count: { select: { projects: true } },
+      },
+    }),
+
+    prisma.project.findMany({
+      where: { accountManagerId: userId },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+      select: {
+        id: true, name: true, status: true, startDate: true, endDate: true,
+        client: { select: { companyName: true } },
+        _count: { select: { tasks: true, milestones: true } },
+      },
+    }),
+  ]);
+
+  return {
+    clients: { total: totalClients, active: activeClients },
+    projects: { total: totalProjects, active: activeProjects },
+    tasks: { total: totalTasks, completed: completedTasks, inReview: inReviewTasks },
+    upcomingMilestones,
+    recentDocuments,
+    upcomingMeetings,
+    clientsList,
+    projectsList,
+  };
+}

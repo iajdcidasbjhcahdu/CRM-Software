@@ -1,4 +1,4 @@
-import { getDashboardStats, getClientDashboardStats, getEmployeeDashboardStats, getSalesDashboardStats } from "./dashboard.service.js";
+import { getDashboardStats, getClientDashboardStats, getEmployeeDashboardStats, getSalesDashboardStats, getAccountDashboardStats } from "./dashboard.service.js";
 import { ok } from "../../utils/apiResponse.js";
 import prisma from "../../utils/prisma.js";
 import { getUserProjectIds } from "../../utils/projectPermission.js";
@@ -83,6 +83,19 @@ export async function getSalesStats(req, res, next) {
   try {
     const stats = await getSalesDashboardStats();
     return ok(res, "Sales dashboard statistics fetched", stats);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * GET /api/dashboard/account-stats
+ * Returns dashboard statistics for the Account Manager — client & project view.
+ */
+export async function getAccountStats(req, res, next) {
+  try {
+    const stats = await getAccountDashboardStats(req.user.id);
+    return ok(res, "Account manager dashboard statistics fetched", stats);
   } catch (error) {
     next(error);
   }

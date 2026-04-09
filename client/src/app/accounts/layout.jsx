@@ -2,12 +2,34 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/actions/auth.action";
 import { getSiteData } from "@/actions/site.action";
 import { AuthProvider } from "@/context/AuthContext";
+import DashboardShell from "@/components/dashboard/DashboardShell";
 
 export async function generateMetadata() {
   const siteData = await getSiteData();
   const name = siteData?.name || "TaskGo Agency";
   return { title: `Accounts Panel — ${name}` };
 }
+
+const navItems = [
+  { name: "Dashboard", href: "/accounts/dashboard", icon: "LayoutDashboard" },
+  {
+    name: "Clients",
+    href: "/accounts/clients",
+    icon: "Building2",
+  },
+  {
+    name: "Projects",
+    href: "/accounts/projects",
+    icon: "FolderKanban",
+    children: [
+      { name: "All Projects", href: "/accounts/projects" },
+      { name: "Add Project", href: "/accounts/projects/create" },
+    ],
+  },
+  { name: "Documents", href: "/accounts/documents", icon: "FileText" },
+  { name: "Meetings", href: "/accounts/meetings", icon: "Calendar" },
+  { name: "Teams", href: "/accounts/teams", icon: "Users" },
+];
 
 export default async function AccountsLayout({ children }) {
   const user = await getAuthUser();
@@ -22,7 +44,9 @@ export default async function AccountsLayout({ children }) {
 
   return (
     <AuthProvider initialUser={user}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">{children}</div>
+      <DashboardShell title="Accounts Panel" navItems={navItems}>
+        <div className="bg-slate-50 dark:bg-slate-950">{children}</div>
+      </DashboardShell>
     </AuthProvider>
   );
 }
