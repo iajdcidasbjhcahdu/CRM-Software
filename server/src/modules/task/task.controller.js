@@ -9,6 +9,11 @@ class TaskController {
     return created(res, "Task created", task);
   });
 
+  getMyTasks = catchAsync(async (req, res) => {
+    const tasks = await taskService.getMyTasks(req.user.id, req.query);
+    return ok(res, "My tasks retrieved", tasks);
+  });
+
   getByProject = catchAsync(async (req, res) => {
     const tasks = await taskService.getTasksByProject(req.params.projectId, req.user.id, req.query);
     return ok(res, "Tasks retrieved", tasks);

@@ -3,6 +3,7 @@ import catchAsync from "../../utils/catchAsync.js";
 import { ok, created } from "../../utils/apiResponse.js";
 import prisma from "../../utils/prisma.js";
 import { ApiError } from "../../utils/apiError.js";
+import { getUserProjectIds } from "../../utils/projectPermission.js";
 
 class ProjectController {
   createProject = catchAsync(async (req, res) => {
@@ -28,6 +29,18 @@ class ProjectController {
       query.clientId = user.clientId;
     }
 
+    // EMPLOYEE users can only see projects they're assigned to via team membership
+    if (req.user.role === "EMPLOYEE") {
+      const pIds = await getUserProjectIds(req.user.id);
+      if (pIds.length === 0) {
+        return ok(res, "Projects retrieved", {
+          projects: [],
+          pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
+        });
+      }
+      query.projectIds = pIds;
+    }
+
     const result = await projectService.listProjects(query);
     return ok(res, "Projects retrieved", result);
   });
@@ -42,6 +55,14 @@ class ProjectController {
         select: { clientId: true },
       });
       if (!user?.clientId || project.clientId !== user.clientId) {
+        throw ApiError.forbidden("You do not have access to this project");
+      }
+    }
+
+    // EMPLOYEE users can only view projects they're assigned to via team
+    if (req.user.role === "EMPLOYEE") {
+      const pIds = await getUserProjectIds(req.user.id);
+      if (!pIds.includes(req.params.id)) {
         throw ApiError.forbidden("You do not have access to this project");
       }
     }

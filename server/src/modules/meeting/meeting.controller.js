@@ -2,6 +2,7 @@ import meetingService from "./meeting.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 import { ok, created } from "../../utils/apiResponse.js";
 import prisma from "../../utils/prisma.js";
+import { getUserProjectIds } from "../../utils/projectPermission.js";
 
 class MeetingController {
   create = catchAsync(async (req, res) => {
@@ -25,6 +26,14 @@ class MeetingController {
           select: { id: true },
         });
         query.projectIds = projects.map((p) => p.id);
+      }
+    }
+
+    // EMPLOYEE users only see meetings from their team's projects
+    if (req.user.role === "EMPLOYEE") {
+      const pIds = await getUserProjectIds(req.user.id);
+      if (pIds.length > 0) {
+        query.projectIds = pIds;
       }
     }
 

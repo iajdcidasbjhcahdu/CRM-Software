@@ -2,12 +2,21 @@ import { redirect } from "next/navigation";
 import { getAuthUser } from "@/actions/auth.action";
 import { getSiteData } from "@/actions/site.action";
 import { AuthProvider } from "@/context/AuthContext";
+import DashboardShell from "@/components/dashboard/DashboardShell";
 
 export async function generateMetadata() {
   const siteData = await getSiteData();
   const name = siteData?.name || "TaskGo Agency";
   return { title: `Employee Panel — ${name}` };
 }
+
+const navItems = [
+  { name: "Dashboard", href: "/employee/dashboard", icon: "LayoutDashboard" },
+  { name: "My Tasks", href: "/employee/tasks", icon: "ListChecks" },
+  { name: "Projects", href: "/employee/projects", icon: "FolderKanban" },
+  { name: "Documents", href: "/employee/documents", icon: "FileText" },
+  { name: "Meetings", href: "/employee/meetings", icon: "Calendar" },
+];
 
 export default async function EmployeeLayout({ children }) {
   const user = await getAuthUser();
@@ -22,7 +31,9 @@ export default async function EmployeeLayout({ children }) {
 
   return (
     <AuthProvider initialUser={user}>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950">{children}</div>
+      <DashboardShell title="Employee Panel" navItems={navItems}>
+        <div className="bg-slate-50 dark:bg-slate-950">{children}</div>
+      </DashboardShell>
     </AuthProvider>
   );
 }

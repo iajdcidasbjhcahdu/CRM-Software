@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authenticate from "../../middlewares/auth.middleware.js";
 import authorize from "../../middlewares/role.middleware.js";
-import { getStats, getClientStats } from "./dashboard.controller.js";
+import { getStats, getClientStats, getEmployeeStats } from "./dashboard.controller.js";
 
 const router = Router();
 
@@ -10,5 +10,8 @@ router.get("/stats", authenticate, authorize("OWNER", "ADMIN"), getStats);
 
 // CLIENT portal dashboard stats
 router.get("/client-stats", authenticate, authorize("CLIENT"), getClientStats);
+
+// EMPLOYEE portal dashboard stats
+router.get("/employee-stats", authenticate, authorize("EMPLOYEE"), getEmployeeStats);
 
 export default router;

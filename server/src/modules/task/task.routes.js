@@ -16,6 +16,7 @@ const router = Router();
 router.use(authenticate);
 
 // Named routes first
+router.get("/my", taskController.getMyTasks);
 router.get("/project/:projectId", taskController.getByProject);
 router.get("/project/:projectId/assignable-users", taskController.getAssignableUsers);
 router.patch("/bulk-status", validate(bulkUpdateStatusSchema), taskController.bulkUpdateStatus);

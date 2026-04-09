@@ -176,6 +176,13 @@ export async function getClientDashboardStatsAPI(accessToken) {
   });
 }
 
+export async function getEmployeeDashboardStatsAPI(accessToken) {
+  return request("/api/dashboard/employee-stats", {
+    method: "GET",
+    token: accessToken,
+  });
+}
+
 /* ───────── Client Endpoints ───────── */
 
 export async function getClientsAPI(params, accessToken) {
@@ -822,6 +829,11 @@ export async function reorderPlanningStepsAPI(projectId, stepIds, accessToken) {
 export async function getTasksByProjectAPI(projectId, params, accessToken) {
   const query = params ? new URLSearchParams(params).toString() : "";
   return request(`/api/tasks/project/${projectId}${query ? `?${query}` : ""}`, { method: "GET", token: accessToken });
+}
+
+export async function getMyTasksAPI(params, accessToken) {
+  const query = params ? new URLSearchParams(params).toString() : "";
+  return request(`/api/tasks/my${query ? `?${query}` : ""}`, { method: "GET", token: accessToken });
 }
 
 export async function getTaskAPI(id, accessToken) {

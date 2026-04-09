@@ -378,6 +378,25 @@ class TaskService {
     });
   }
 
+  /**
+   * Get all tasks assigned to a specific user across all projects.
+   */
+  async getMyTasks(userId, filters = {}) {
+    const where = { assigneeId: userId };
+    if (filters.status) where.status = filters.status;
+    if (filters.priority) where.priority = filters.priority;
+    if (filters.projectId) where.projectId = filters.projectId;
+
+    return prisma.task.findMany({
+      where,
+      include: {
+        ...TASK_INCLUDE,
+        project: { select: { id: true, name: true } },
+      },
+      orderBy: [{ status: "asc" }, { priority: "desc" }, { createdAt: "desc" }],
+    });
+  }
+
   async getChildTasks(taskId, userId) {
     const task = await prisma.task.findUnique({ where: { id: taskId } });
     if (!task) throw ApiError.notFound("Task not found");

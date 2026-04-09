@@ -57,7 +57,7 @@ class DocumentService {
   /**
    * List documents with pagination, filters, search.
    */
-  async listDocuments({ page, limit, type, dealId, clientId, projectId, search, sortBy, sortOrder }) {
+  async listDocuments({ page, limit, type, dealId, clientId, projectId, projectIds, search, sortBy, sortOrder }) {
     const skip = (page - 1) * limit;
     const where = {};
 
@@ -65,6 +65,7 @@ class DocumentService {
     if (dealId) where.dealId = dealId;
     if (clientId) where.clientId = clientId;
     if (projectId) where.projectId = projectId;
+    if (projectIds?.length) where.projectId = { in: projectIds };
 
     if (search) {
       where.OR = [

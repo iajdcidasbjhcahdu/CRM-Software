@@ -175,3 +175,38 @@ export async function getProjectAssignableUsers(projectId) {
 
   return Array.from(userMap.values());
 }
+
+/**
+ * Get all project IDs that a user has access to via team membership or team lead role.
+ * Used to scope queries for EMPLOYEE role users.
+ *
+ * @param {string} userId
+ * @returns {Promise<string[]>} Array of project IDs
+ */
+export async function getUserProjectIds(userId) {
+  // Get teams where user is a member
+  const memberTeams = await prisma.teamMember.findMany({
+    where: { userId },
+    select: { teamId: true },
+  });
+
+  // Get teams where user is a lead
+  const ledTeams = await prisma.team.findMany({
+    where: { leadId: userId },
+    select: { id: true },
+  });
+
+  const allTeamIds = [...new Set([
+    ...memberTeams.map((m) => m.teamId),
+    ...ledTeams.map((t) => t.id),
+  ])];
+
+  if (allTeamIds.length === 0) return [];
+
+  const projectTeams = await prisma.projectTeam.findMany({
+    where: { teamId: { in: allTeamIds } },
+    select: { projectId: true },
+  });
+
+  return [...new Set(projectTeams.map((pt) => pt.projectId))];
+}

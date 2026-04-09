@@ -2,6 +2,7 @@ import documentService from "./document.service.js";
 import catchAsync from "../../utils/catchAsync.js";
 import { ok, created } from "../../utils/apiResponse.js";
 import prisma from "../../utils/prisma.js";
+import { getUserProjectIds } from "../../utils/projectPermission.js";
 
 class DocumentController {
   create = catchAsync(async (req, res) => {
@@ -20,6 +21,14 @@ class DocumentController {
       });
       if (user?.clientId) {
         query.clientId = user.clientId;
+      }
+    }
+
+    // EMPLOYEE users only see documents from their team's projects
+    if (req.user.role === "EMPLOYEE") {
+      const pIds = await getUserProjectIds(req.user.id);
+      if (pIds.length > 0) {
+        query.projectIds = pIds;
       }
     }
 

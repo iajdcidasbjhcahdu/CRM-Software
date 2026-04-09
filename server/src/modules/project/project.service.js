@@ -157,7 +157,7 @@ class ProjectService {
   /**
    * List projects with pagination, filters, search
    */
-  async listProjects({ page, limit, status, billingCycle, clientId, accountManagerId, search, sortBy, sortOrder }) {
+  async listProjects({ page, limit, status, billingCycle, clientId, accountManagerId, projectIds, search, sortBy, sortOrder }) {
     const skip = (page - 1) * limit;
     const where = {};
 
@@ -165,6 +165,7 @@ class ProjectService {
     if (billingCycle) where.billingCycle = billingCycle;
     if (clientId) where.clientId = clientId;
     if (accountManagerId) where.accountManagerId = accountManagerId;
+    if (projectIds?.length) where.id = { in: projectIds };
 
     if (search) {
       where.OR = [

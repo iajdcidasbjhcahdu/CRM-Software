@@ -379,3 +379,121 @@ export async function getClientDashboardStats(clientId) {
     projectsList,
   };
 }
+
+/**
+ * Fetches dashboard statistics scoped to an employee user (via team membership).
+ *
+ * @param {string} userId – The employee user ID
+ * @param {string[]} projectIds – Pre-resolved project IDs from getUserProjectIds()
+ */
+export async function getEmployeeDashboardStats(userId, projectIds) {
+  const now = new Date();
+  const pIds = projectIds;
+
+  const [
+    totalProjects,
+    activeProjects,
+    myTotalTasks,
+    myTodoTasks,
+    myInProgressTasks,
+    myInReviewTasks,
+    myCompletedTasks,
+    upcomingMilestones,
+    recentTasks,
+    upcomingMeetings,
+    projectsList,
+  ] = await Promise.all([
+    // Project counts
+    prisma.project.count({ where: { id: { in: pIds } } }),
+    prisma.project.count({ where: { id: { in: pIds }, status: "IN_PROGRESS" } }),
+
+    // Tasks assigned to this user
+    prisma.task.count({ where: { assigneeId: userId } }),
+    prisma.task.count({ where: { assigneeId: userId, status: "TODO" } }),
+    prisma.task.count({ where: { assigneeId: userId, status: "IN_PROGRESS" } }),
+    prisma.task.count({ where: { assigneeId: userId, status: "IN_REVIEW" } }),
+    prisma.task.count({ where: { assigneeId: userId, status: { in: ["COMPLETED", "REVIEWED"] } } }),
+
+    // Upcoming milestones from assigned projects
+    prisma.milestone.findMany({
+      where: {
+        projectId: { in: pIds },
+        status: { in: ["PENDING", "IN_PROGRESS"] },
+      },
+      take: 5,
+      orderBy: { dueDate: "asc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        dueDate: true,
+        project: { select: { id: true, name: true } },
+      },
+    }),
+
+    // Recent tasks assigned to user (last updated)
+    prisma.task.findMany({
+      where: { assigneeId: userId },
+      take: 5,
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        priority: true,
+        dueDate: true,
+        project: { select: { id: true, name: true } },
+      },
+    }),
+
+    // Upcoming meetings from assigned projects
+    prisma.meeting.findMany({
+      where: {
+        projectId: { in: pIds },
+        scheduledAt: { gte: now },
+        status: "SCHEDULED",
+      },
+      take: 5,
+      orderBy: { scheduledAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        mode: true,
+        status: true,
+        scheduledAt: true,
+        duration: true,
+        project: { select: { id: true, name: true } },
+      },
+    }),
+
+    // Projects overview
+    prisma.project.findMany({
+      where: { id: { in: pIds } },
+      orderBy: { updatedAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        startDate: true,
+        endDate: true,
+        _count: { select: { tasks: true, milestones: true } },
+      },
+    }),
+  ]);
+
+  return {
+    projects: { total: totalProjects, active: activeProjects },
+    tasks: {
+      total: myTotalTasks,
+      todo: myTodoTasks,
+      inProgress: myInProgressTasks,
+      inReview: myInReviewTasks,
+      completed: myCompletedTasks,
+    },
+    upcomingMilestones,
+    recentTasks,
+    upcomingMeetings,
+    projectsList,
+  };
+}

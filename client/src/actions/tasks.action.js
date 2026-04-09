@@ -11,6 +11,7 @@ import {
   getAssignableUsersAPI,
   addTaskFeedbackAPI,
   getChildTasksAPI,
+  getMyTasksAPI,
 } from "@/lib/api";
 
 async function getToken() {
@@ -106,6 +107,19 @@ export async function addTaskFeedback(taskId, data) {
     return { success: false, error: res.message };
   } catch (err) {
     return { success: false, error: err.message };
+  }
+}
+
+export async function getMyTasks(filters = {}) {
+  const token = await getToken();
+  if (!token) return { success: false, data: [] };
+
+  try {
+    const res = await getMyTasksAPI(filters, token);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, data: [], error: res.message };
+  } catch (err) {
+    return { success: false, data: [], error: err.message };
   }
 }
 
