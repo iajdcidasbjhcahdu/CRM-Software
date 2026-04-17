@@ -10,6 +10,7 @@ import {
   createMeetingAPI,
   updateMeetingAPI,
   deleteMeetingAPI,
+  completePostProductionMeetingAPI,
 } from "@/lib/api";
 
 async function getToken() {
@@ -115,6 +116,23 @@ export async function deleteMeeting(id) {
   try {
     const res = await deleteMeetingAPI(id, token);
     if (res.success) return { success: true };
+    return { success: false, error: res.message };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Complete a POST_PRODUCTION meeting with structured per-task feedback.
+ * data: { outcome?, taskFeedbacks: [{ taskId, feedback?, nextStep?, statusAfter? }] }
+ */
+export async function completePostProductionMeeting(id, data) {
+  const token = await getToken();
+  if (!token) return { success: false, error: "Not authenticated" };
+
+  try {
+    const res = await completePostProductionMeetingAPI(id, data, token);
+    if (res.success) return { success: true, data: res.data };
     return { success: false, error: res.message };
   } catch (err) {
     return { success: false, error: err.message };

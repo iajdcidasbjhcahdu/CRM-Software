@@ -22,6 +22,21 @@ const MEETING_INCLUDE = {
     select: { id: true, title: true, scheduledAt: true, status: true },
     orderBy: { scheduledAt: "asc" },
   },
+  meetingTasks: {
+    include: {
+      task: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          priority: true,
+          assignee: {
+            select: { id: true, firstName: true, lastName: true, avatar: true },
+          },
+        },
+      },
+    },
+  },
 };
 
 class MeetingService {
@@ -52,25 +67,54 @@ class MeetingService {
       data.isFollowUp = true;
     }
 
-    const meeting = await prisma.meeting.create({
-      data: {
-        title: data.title,
-        description: data.description || null,
-        mode: data.mode || "VIRTUAL",
-        status: data.status || "SCHEDULED",
-        link: data.link || null,
-        scheduledAt: data.scheduledAt,
-        duration: data.duration || null,
-        notes: data.notes || null,
-        outcome: data.outcome || null,
-        isFollowUp: data.isFollowUp || false,
-        parentMeetingId: data.parentMeetingId || null,
-        leadId: data.leadId || null,
-        dealId: data.dealId || null,
-        projectId: data.projectId || null,
-        createdById,
-      },
-      include: MEETING_INCLUDE,
+    // Validate taskIds (if provided) belong to the linked project
+    if (data.taskIds?.length) {
+      if (!data.projectId) {
+        throw ApiError.badRequest("Linking tasks requires the meeting to be tied to a project");
+      }
+      const validTasks = await prisma.task.findMany({
+        where: { id: { in: data.taskIds }, projectId: data.projectId },
+        select: { id: true },
+      });
+      if (validTasks.length !== data.taskIds.length) {
+        throw ApiError.badRequest("One or more tasks do not belong to the linked project");
+      }
+    }
+
+    const meeting = await prisma.$transaction(async (tx) => {
+      const created = await tx.meeting.create({
+        data: {
+          title: data.title,
+          description: data.description || null,
+          mode: data.mode || "VIRTUAL",
+          status: data.status || "SCHEDULED",
+          phase: data.phase || "REGULAR",
+          link: data.link || null,
+          scheduledAt: data.scheduledAt,
+          duration: data.duration || null,
+          notes: data.notes || null,
+          outcome: data.outcome || null,
+          requirements: data.requirements ?? null,
+          isFollowUp: data.isFollowUp || false,
+          parentMeetingId: data.parentMeetingId || null,
+          leadId: data.leadId || null,
+          dealId: data.dealId || null,
+          projectId: data.projectId || null,
+          createdById,
+        },
+      });
+
+      if (data.taskIds?.length) {
+        await tx.meetingTask.createMany({
+          data: data.taskIds.map((taskId) => ({ meetingId: created.id, taskId })),
+          skipDuplicates: true,
+        });
+      }
+
+      return tx.meeting.findUnique({
+        where: { id: created.id },
+        include: MEETING_INCLUDE,
+      });
     });
 
     // ── Send in-app notifications ──
@@ -164,12 +208,13 @@ class MeetingService {
     return meeting;
   }
 
-  async listMeetings({ page, limit, mode, status, leadId, dealId, projectId, projectIds, search, sortBy, sortOrder }) {
+  async listMeetings({ page, limit, mode, status, phase, leadId, dealId, projectId, projectIds, search, sortBy, sortOrder }) {
     const skip = (page - 1) * limit;
     const where = {};
 
     if (mode) where.mode = mode;
     if (status) where.status = status;
+    if (phase) where.phase = phase;
     if (leadId) where.leadId = leadId;
     if (dealId) where.dealId = dealId;
     if (projectId) where.projectId = projectId;
@@ -213,10 +258,117 @@ class MeetingService {
     const meeting = await prisma.meeting.findUnique({ where: { id } });
     if (!meeting) throw ApiError.notFound("Meeting not found");
 
-    return prisma.meeting.update({
-      where: { id },
-      data,
-      include: MEETING_INCLUDE,
+    const { taskIds, ...rest } = data;
+
+    // Validate taskIds belong to the meeting's project (if provided)
+    if (taskIds !== undefined && taskIds?.length) {
+      const targetProjectId = rest.projectId ?? meeting.projectId;
+      if (!targetProjectId) {
+        throw ApiError.badRequest("Linking tasks requires the meeting to be tied to a project");
+      }
+      const validTasks = await prisma.task.findMany({
+        where: { id: { in: taskIds }, projectId: targetProjectId },
+        select: { id: true },
+      });
+      if (validTasks.length !== taskIds.length) {
+        throw ApiError.badRequest("One or more tasks do not belong to the linked project");
+      }
+    }
+
+    return prisma.$transaction(async (tx) => {
+      await tx.meeting.update({ where: { id }, data: rest });
+
+      // Replace task links if taskIds was explicitly provided
+      if (taskIds !== undefined) {
+        await tx.meetingTask.deleteMany({ where: { meetingId: id } });
+        if (taskIds.length) {
+          await tx.meetingTask.createMany({
+            data: taskIds.map((taskId) => ({ meetingId: id, taskId })),
+            skipDuplicates: true,
+          });
+        }
+      }
+
+      return tx.meeting.findUnique({ where: { id }, include: MEETING_INCLUDE });
+    });
+  }
+
+  /**
+   * Complete a POST_PRODUCTION meeting with structured per-task feedback.
+   * Updates meeting status to COMPLETED, stores the outcome, and creates a
+   * TaskFeedback row for each linked task (mirrors the auto-feedback flow in
+   * task.service.js when status changes).
+   */
+  async completePostProductionMeeting(meetingId, data, userId) {
+    const meeting = await prisma.meeting.findUnique({
+      where: { id: meetingId },
+      include: { meetingTasks: { select: { taskId: true } } },
+    });
+    if (!meeting) throw ApiError.notFound("Meeting not found");
+    if (meeting.phase !== "POST_PRODUCTION") {
+      throw ApiError.badRequest("This action is only valid for POST_PRODUCTION meetings");
+    }
+
+    const linkedTaskIds = new Set(meeting.meetingTasks.map((mt) => mt.taskId));
+    const taskFeedbacks = data.taskFeedbacks || [];
+
+    // Validate that every taskFeedback references a linked task
+    for (const tf of taskFeedbacks) {
+      if (!linkedTaskIds.has(tf.taskId)) {
+        throw ApiError.badRequest(`Task ${tf.taskId} is not linked to this meeting`);
+      }
+    }
+
+    return prisma.$transaction(async (tx) => {
+      // 1. Mark meeting complete + save outcome
+      await tx.meeting.update({
+        where: { id: meetingId },
+        data: {
+          status: "COMPLETED",
+          outcome: data.outcome ?? undefined,
+        },
+      });
+
+      // 2. For each per-task feedback entry, write TaskFeedback + (optionally) update status
+      for (const tf of taskFeedbacks) {
+        const task = await tx.task.findUnique({ where: { id: tf.taskId } });
+        if (!task) continue;
+
+        const statusAfter = tf.statusAfter || task.status;
+        const statusChanged = statusAfter !== task.status;
+
+        await tx.taskFeedback.create({
+          data: {
+            feedback: tf.feedback?.trim() || null,
+            nextStep: tf.nextStep?.trim() || null,
+            statusAfter,
+            taskId: tf.taskId,
+            givenById: userId,
+          },
+        });
+
+        if (statusChanged) {
+          const updateData = { status: statusAfter };
+
+          if (statusAfter === "COMPLETED" && task.status !== "COMPLETED") {
+            updateData.completedAt = new Date();
+          } else if (statusAfter !== "COMPLETED" && task.status === "COMPLETED") {
+            updateData.completedAt = null;
+          }
+
+          if (statusAfter === "REVIEWED" && task.status !== "REVIEWED") {
+            updateData.reviewedAt = new Date();
+            updateData.reviewedById = userId;
+          } else if (statusAfter !== "REVIEWED" && task.status === "REVIEWED") {
+            updateData.reviewedAt = null;
+            updateData.reviewedById = null;
+          }
+
+          await tx.task.update({ where: { id: tf.taskId }, data: updateData });
+        }
+      }
+
+      return tx.meeting.findUnique({ where: { id: meetingId }, include: MEETING_INCLUDE });
     });
   }
 

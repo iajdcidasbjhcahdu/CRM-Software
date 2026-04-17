@@ -79,6 +79,15 @@ class MeetingController {
     const meetings = await meetingService.getMeetingsByProject(req.params.projectId);
     return ok(res, "Meetings retrieved", meetings);
   });
+
+  completePostProduction = catchAsync(async (req, res) => {
+    const meeting = await meetingService.completePostProductionMeeting(
+      req.params.id,
+      req.body,
+      req.user.id
+    );
+    return ok(res, "Post-production meeting completed with feedback", meeting);
+  });
 }
 
 export default new MeetingController();

@@ -758,17 +758,29 @@ enum MeetingStatus {
   NO_SHOW
 }
 
+enum MeetingPhase {
+  REGULAR
+  KICKOFF
+  PRE_PRODUCTION
+  POST_PRODUCTION
+  REVIEW
+}
+
 model Meeting {
   id              String        @id @default(cuid())
   title           String
   description     String?       @db.Text
   mode            MeetingMode   @default(VIRTUAL)
   status          MeetingStatus @default(SCHEDULED)
+  phase           MeetingPhase  @default(REGULAR) @map("phase")
   link            String?       // Meet link, phone number, or place
   scheduledAt     DateTime      @map("scheduled_at")
   duration        Int?          // Duration in minutes
   notes           String?       @db.Text
   outcome         String?       @db.Text
+  // Structured requirements captured in this meeting (esp. pre-production).
+  // Shape: Array<{ title: string, description?: string, priority?: "LOW"|"MEDIUM"|"HIGH"|"URGENT" }>
+  requirements    Json?
   isFollowUp      Boolean       @default(false) @map("is_follow_up")
   parentMeetingId String?       @map("parent_meeting_id")
   parentMeeting   Meeting?      @relation("MeetingFollowUps", fields: [parentMeetingId], references: [id], onDelete: SetNull)
@@ -784,6 +796,9 @@ model Meeting {
   projectId       String?       @map("project_id")
   project         Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  // Tasks linked to this meeting (for pre-production briefing or post-production review)
+  meetingTasks    MeetingTask[]
+
   // Who created this meeting
   createdById     String        @map("created_by_id")
   createdBy       User          @relation("MeetingCreator", fields: [createdById], references: [id])
@@ -795,9 +810,28 @@ model Meeting {
   @@index([dealId])
   @@index([projectId])
   @@index([status])
+  @@index([phase])
   @@index([scheduledAt])
   @@index([createdById])
   @@map("meetings")
+}
+
+// ─── MeetingTask (junction) ──────────────────────────
+// Links meetings to specific tasks — e.g. which tasks were briefed in a pre-production
+// meeting, or which tasks were reviewed in a post-production meeting.
+
+model MeetingTask {
+  id        String   @id @default(cuid())
+  meetingId String   @map("meeting_id")
+  taskId    String   @map("task_id")
+  meeting   Meeting  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([meetingId, taskId])
+  @@index([meetingId])
+  @@index([taskId])
+  @@map("meeting_tasks")
 }
 
 // ─── Lead Follow-Up ──────────────────────────────────
@@ -979,6 +1013,12 @@ model Task {
   id          String       @id @default(cuid())
   title       String
   description String?      @db.Text
+  // Creative goal — what this task aims to produce / achieve
+  objectives  String?      @db.Text
+  // What will be delivered (shots, edits, designs, etc.)
+  deliverables String?     @db.Text
+  // References: array of { label: string, url: string } — mood boards, examples, briefs
+  references  Json?
   status      TaskStatus   @default(TODO)
   priority    TaskPriority @default(MEDIUM)
   position    Int          @default(0)
@@ -1012,6 +1052,9 @@ model Task {
   parentTaskId String?      @map("parent_task_id")
   parentTask   Task?        @relation("TaskChildren", fields: [parentTaskId], references: [id], onDelete: SetNull)
   childTasks   Task[]       @relation("TaskChildren")
+
+  // Meetings linked to this task (pre-production briefing, post-production review, etc.)
+  meetingTasks MeetingTask[]
 
   feedbacks   TaskFeedback[]
 

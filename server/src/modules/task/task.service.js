@@ -46,6 +46,13 @@ const TASK_INCLUDE = {
     },
     orderBy: { createdAt: "desc" },
   },
+  meetingTasks: {
+    include: {
+      meeting: {
+        select: { id: true, title: true, phase: true, scheduledAt: true, status: true },
+      },
+    },
+  },
 };
 
 const STATUS_LABELS = {
@@ -118,6 +125,9 @@ class TaskService {
       data: {
         title: data.title,
         description: data.description || null,
+        objectives: data.objectives || null,
+        deliverables: data.deliverables || null,
+        references: data.references ?? null,
         status: data.status || "TODO",
         priority: data.priority || "MEDIUM",
         position,
@@ -190,6 +200,9 @@ class TaskService {
     const updateData = {};
     if (data.title !== undefined) updateData.title = data.title;
     if (data.description !== undefined) updateData.description = data.description;
+    if (data.objectives !== undefined) updateData.objectives = data.objectives;
+    if (data.deliverables !== undefined) updateData.deliverables = data.deliverables;
+    if (data.references !== undefined) updateData.references = data.references;
     if (data.priority !== undefined) updateData.priority = data.priority;
     if (data.position !== undefined) updateData.position = data.position;
     if (data.dueDate !== undefined) updateData.dueDate = data.dueDate ? new Date(data.dueDate) : null;

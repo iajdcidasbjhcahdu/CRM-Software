@@ -9,6 +9,7 @@ import {
   listMeetingsSchema,
   getMeetingSchema,
   deleteMeetingSchema,
+  completePostProductionSchema,
 } from "./meeting.validation.js";
 
 const router = Router();
@@ -41,6 +42,14 @@ router.delete(
   authorize("OWNER", "ADMIN"),
   validate(deleteMeetingSchema),
   meetingController.delete
+);
+
+// Complete a POST_PRODUCTION meeting with structured per-task feedback
+router.post(
+  "/:id/complete-post-production",
+  authorize("OWNER", "ADMIN", "ACCOUNT_MANAGER"),
+  validate(completePostProductionSchema),
+  meetingController.completePostProduction
 );
 
 export default router;

@@ -20,6 +20,11 @@ import {
   ArrowRight,
   GitBranch,
   CornerDownRight,
+  Lightbulb,
+  Package,
+  Link as LinkIcon,
+  Video,
+  ExternalLink,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import ConfirmModal from "@/components/ui/ConfirmModal";
@@ -417,6 +422,8 @@ export default function PlanningSection({
     const feedbacks = task.feedbacks || [];
     const childTasks = task.childTasks || [];
     const teamName = getTeamName(assignee || getAssigneeInfo(task.assigneeId));
+    const references = Array.isArray(task.references) ? task.references : [];
+    const linkedMeetings = (task.meetingTasks || []).map((mt) => mt.meeting).filter(Boolean);
 
     return (
       <div className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 mb-3">
@@ -488,6 +495,71 @@ export default function PlanningSection({
           {task.milestoneId && (<div className="flex items-center gap-2"><Target className="w-4 h-4 flex-shrink-0" /><span className="truncate">{getMilestoneName(task.milestoneId)}</span></div>)}
           {task.planningStepId && (<div className="flex items-center gap-2"><Layers className="w-4 h-4 flex-shrink-0" /><span className="truncate">{getStepName(task.planningStepId)}</span></div>)}
         </div>
+
+        {/* Content details: objectives, deliverables, references, linked meetings */}
+        {(task.objectives || task.deliverables || references.length > 0 || linkedMeetings.length > 0) && (
+          <div className="mb-3 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+            {task.objectives && (
+              <div className="flex items-start gap-2 text-sm">
+                <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Objectives</span>
+                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">{task.objectives}</p>
+                </div>
+              </div>
+            )}
+            {task.deliverables && (
+              <div className="flex items-start gap-2 text-sm">
+                <Package className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Deliverables</span>
+                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-words">{task.deliverables}</p>
+                </div>
+              </div>
+            )}
+            {references.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <LinkIcon className="w-3.5 h-3.5 text-indigo-500 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">References</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {references.map((ref, idx) => (
+                      <a
+                        key={idx}
+                        href={ref.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                      >
+                        {ref.label}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            {linkedMeetings.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <Video className="w-3.5 h-3.5 text-sky-500 flex-shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Meetings</span>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {linkedMeetings.map((m) => (
+                      <span
+                        key={m.id}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 dark:bg-sky-900/20 text-sky-600 dark:text-sky-400 text-xs font-medium"
+                      >
+                        <Badge value={m.phase || "REGULAR"} />
+                        <span className="truncate max-w-[180px]">{m.title}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Child tasks / follow-ups */}
         {childTasks.length > 0 && (
@@ -788,13 +860,22 @@ function TaskModal({ isOpen, onClose, onSave, mode, data, steps, milestones, ass
   const [formData, setFormData] = React.useState({});
 
   React.useEffect(() => {
-    if (isOpen && data) setFormData(data);
+    if (isOpen && data) {
+      setFormData({
+        ...data,
+        references: Array.isArray(data.references) ? data.references : [],
+      });
+    }
   }, [isOpen, data]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Strip UI-only fields before saving
-    const { parentTaskTitle, ...submitData } = formData;
+    // Strip UI-only fields + drop empty references
+    const { parentTaskTitle, ...rest } = formData;
+    const submitData = {
+      ...rest,
+      references: (rest.references || []).filter((r) => r.label?.trim() && r.url?.trim()),
+    };
     onSave(submitData);
   };
 
@@ -803,6 +884,23 @@ function TaskModal({ isOpen, onClose, onSave, mode, data, steps, milestones, ass
   const getTeamLabel = (user) => {
     if (!user?.teams?.length) return "";
     return ` (${user.teams[0].name})`;
+  };
+
+  const addReference = () => {
+    setFormData({
+      ...formData,
+      references: [...(formData.references || []), { label: "", url: "" }],
+    });
+  };
+  const updateReference = (idx, field, value) => {
+    const next = [...(formData.references || [])];
+    next[idx] = { ...next[idx], [field]: value };
+    setFormData({ ...formData, references: next });
+  };
+  const removeReference = (idx) => {
+    const next = [...(formData.references || [])];
+    next.splice(idx, 1);
+    setFormData({ ...formData, references: next });
   };
 
   return (
@@ -820,25 +918,94 @@ function TaskModal({ isOpen, onClose, onSave, mode, data, steps, milestones, ass
         )}
         <FormField label="Title" type="text" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} required />
         <FormField label="Description" type="textarea" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-        <FormField label="Status" type="select" value={formData.status || "TODO"} onChange={(e) => setFormData({ ...formData, status: e.target.value })} options={[
-          { value: "TODO", label: "To Do" }, { value: "IN_PROGRESS", label: "In Progress" }, { value: "IN_REVIEW", label: "In Review" }, { value: "COMPLETED", label: "Completed" }, { value: "REVIEWED", label: "Reviewed" },
-        ]} />
-        <FormField label="Priority" type="select" value={formData.priority || "MEDIUM"} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} options={[
-          { value: "LOW", label: "Low" }, { value: "MEDIUM", label: "Medium" }, { value: "HIGH", label: "High" }, { value: "URGENT", label: "Urgent" },
-        ]} />
-        <FormField label="Assignee" type="select" value={formData.assigneeId || ""} onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })} options={[
-          { value: "", label: "Select an assignee" },
-          ...assignableUsers.map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}${getTeamLabel(u)}` })),
-        ]} />
-        <FormField label="Due Date" type="date" value={formData.dueDate ? formData.dueDate.split("T")[0] : ""} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} />
-        <FormField label="Planning Step" type="select" value={formData.planningStepId || ""} onChange={(e) => setFormData({ ...formData, planningStepId: e.target.value })} options={[
-          { value: "", label: "Select a planning step (optional)" },
-          ...steps.map((s) => ({ value: s.id, label: s.title })),
-        ]} />
-        <FormField label="Milestone" type="select" value={formData.milestoneId || ""} onChange={(e) => setFormData({ ...formData, milestoneId: e.target.value })} options={[
-          { value: "", label: "Select a milestone (optional)" },
-          ...milestones.map((m) => ({ value: m.id, label: m.title })),
-        ]} />
+
+        {/* ── Content Creation Fields ── */}
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+          <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-3">Content Details</p>
+          <div className="space-y-4">
+            <FormField
+              label="Objectives"
+              type="textarea"
+              value={formData.objectives || ""}
+              onChange={(e) => setFormData({ ...formData, objectives: e.target.value })}
+              placeholder="What's the creative goal? e.g. Shoot 10 hero product images for homepage"
+            />
+            <FormField
+              label="Deliverables"
+              type="textarea"
+              value={formData.deliverables || ""}
+              onChange={(e) => setFormData({ ...formData, deliverables: e.target.value })}
+              placeholder="What will be produced? e.g. 10 edited JPEGs (5000x5000px) + 1 hero video (30s)"
+            />
+
+            {/* References editor */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">References</label>
+                <button
+                  type="button"
+                  onClick={addReference}
+                  className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg"
+                >
+                  <Plus className="w-3 h-3" /> Add Reference
+                </button>
+              </div>
+              {(formData.references || []).length === 0 ? (
+                <p className="text-xs text-slate-400 italic">No references added yet. Add links to mood boards, examples, briefs, etc.</p>
+              ) : (
+                <div className="space-y-2">
+                  {(formData.references || []).map((ref, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={ref.label || ""}
+                        onChange={(e) => updateReference(idx, "label", e.target.value)}
+                        placeholder="Label"
+                        className="w-1/3 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-[#5542F6] focus:border-transparent outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={ref.url || ""}
+                        onChange={(e) => updateReference(idx, "url", e.target.value)}
+                        placeholder="https://..."
+                        className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-[#5542F6] focus:border-transparent outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeReference(idx)}
+                        className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-4">
+          <FormField label="Status" type="select" value={formData.status || "TODO"} onChange={(e) => setFormData({ ...formData, status: e.target.value })} options={[
+            { value: "TODO", label: "To Do" }, { value: "IN_PROGRESS", label: "In Progress" }, { value: "IN_REVIEW", label: "In Review" }, { value: "COMPLETED", label: "Completed" }, { value: "REVIEWED", label: "Reviewed" },
+          ]} />
+          <FormField label="Priority" type="select" value={formData.priority || "MEDIUM"} onChange={(e) => setFormData({ ...formData, priority: e.target.value })} options={[
+            { value: "LOW", label: "Low" }, { value: "MEDIUM", label: "Medium" }, { value: "HIGH", label: "High" }, { value: "URGENT", label: "Urgent" },
+          ]} />
+          <FormField label="Assignee" type="select" value={formData.assigneeId || ""} onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })} options={[
+            { value: "", label: "Select an assignee" },
+            ...assignableUsers.map((u) => ({ value: u.id, label: `${u.firstName} ${u.lastName}${getTeamLabel(u)}` })),
+          ]} />
+          <FormField label="Due Date" type="date" value={formData.dueDate ? formData.dueDate.split("T")[0] : ""} onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })} />
+          <FormField label="Planning Step" type="select" value={formData.planningStepId || ""} onChange={(e) => setFormData({ ...formData, planningStepId: e.target.value })} options={[
+            { value: "", label: "Select a planning step (optional)" },
+            ...steps.map((s) => ({ value: s.id, label: s.title })),
+          ]} />
+          <FormField label="Milestone" type="select" value={formData.milestoneId || ""} onChange={(e) => setFormData({ ...formData, milestoneId: e.target.value })} options={[
+            { value: "", label: "Select a milestone (optional)" },
+            ...milestones.map((m) => ({ value: m.id, label: m.title })),
+          ]} />
+        </div>
       </div>
     </SlideOverModal>
   );
@@ -875,7 +1042,7 @@ function SlideOverModal({ isOpen, onClose, title, onSubmit, saving, children }) 
   );
 }
 
-function FormField({ label, type, value, onChange, required, options }) {
+function FormField({ label, type, value, onChange, required, options, placeholder }) {
   const baseInputClass = "w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-slate-900 dark:text-slate-50 focus:ring-2 focus:ring-[#5542F6] focus:border-transparent outline-none";
 
   return (
@@ -884,13 +1051,13 @@ function FormField({ label, type, value, onChange, required, options }) {
         {label}{required && <span className="text-red-500"> *</span>}
       </label>
       {type === "textarea" ? (
-        <textarea value={value} onChange={onChange} className={baseInputClass} rows={4} />
+        <textarea value={value} onChange={onChange} placeholder={placeholder} className={baseInputClass} rows={3} />
       ) : type === "select" ? (
         <select value={value} onChange={onChange} className={baseInputClass}>
           {options.map((option) => (<option key={option.value} value={option.value}>{option.label}</option>))}
         </select>
       ) : (
-        <input type={type} value={value} onChange={onChange} className={baseInputClass} required={required} />
+        <input type={type} value={value} onChange={onChange} placeholder={placeholder} className={baseInputClass} required={required} />
       )}
     </div>
   );

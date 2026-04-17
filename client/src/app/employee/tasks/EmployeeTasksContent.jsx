@@ -14,6 +14,14 @@ import {
   GitBranch,
   CornerDownRight,
   User,
+  Lightbulb,
+  Package,
+  Link as LinkIcon,
+  Video,
+  ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  ClipboardList,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import { getMyTasks } from "@/actions/tasks.action";
@@ -40,6 +48,7 @@ export default function EmployeeTasksContent({ initialTasks = [] }) {
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [priorityFilter, setPriorityFilter] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
 
   const fetchTasks = useCallback(async () => {
     setLoading(true);
@@ -120,65 +129,164 @@ export default function EmployeeTasksContent({ initialTasks = [] }) {
         </div>
       ) : filteredTasks.length > 0 ? (
         <div className="space-y-3">
-          {filteredTasks.map((task) => (
-            <div
-              key={task.id}
-              className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 hover:shadow-md transition-shadow"
-            >
-              {/* Parent task breadcrumb */}
-              {task.parentTask && (
-                <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-400">
-                  <CornerDownRight className="w-3 h-3" />
-                  <span>Follow-up of: {task.parentTask.title}</span>
-                </div>
-              )}
+          {filteredTasks.map((task) => {
+            const references = Array.isArray(task.references) ? task.references : [];
+            const linkedMeetings = (task.meetingTasks || []).map((mt) => mt.meeting).filter(Boolean);
+            const hasContent = task.objectives || task.deliverables || references.length > 0 || linkedMeetings.length > 0 || task.description;
+            const isExpanded = expandedId === task.id;
 
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-slate-900 dark:text-slate-50">{task.title}</h3>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
-                    <Badge value={task.status} />
-                    <Badge value={task.priority} />
-                    {task.project && (
-                      <Link
-                        href={`/employee/projects/${task.project.id}`}
-                        className="inline-flex items-center gap-1 text-xs text-[#5542F6] hover:underline"
+            return (
+              <div
+                key={task.id}
+                className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 hover:shadow-md transition-shadow"
+              >
+                {/* Parent task breadcrumb */}
+                {task.parentTask && (
+                  <div className="flex items-center gap-1.5 mb-2 text-[11px] text-slate-400">
+                    <CornerDownRight className="w-3 h-3" />
+                    <span>Follow-up of: {task.parentTask.title}</span>
+                  </div>
+                )}
+
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-slate-900 dark:text-slate-50">{task.title}</h3>
+                    <div className="flex flex-wrap items-center gap-2 mt-2">
+                      <Badge value={task.status} />
+                      <Badge value={task.priority} />
+                      {task.project && (
+                        <Link
+                          href={`/employee/projects/${task.project.id}`}
+                          className="inline-flex items-center gap-1 text-xs text-[#5542F6] hover:underline"
+                        >
+                          <FolderKanban className="w-3 h-3" /> {task.project.name}
+                        </Link>
+                      )}
+                      {task.milestone && (
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                          <Target className="w-3 h-3" /> {task.milestone.title}
+                        </span>
+                      )}
+                      {task.planningStep && (
+                        <span className="inline-flex items-center gap-1 text-xs text-slate-400">
+                          <Layers className="w-3 h-3" /> {task.planningStep.title}
+                        </span>
+                      )}
+                      {task.objectives && (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600">
+                          <Lightbulb className="w-3 h-3" /> Has objectives
+                        </span>
+                      )}
+                      {linkedMeetings.length > 0 && (
+                        <span className="inline-flex items-center gap-1 text-xs text-sky-600">
+                          <Video className="w-3 h-3" /> {linkedMeetings.length} meeting{linkedMeetings.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 text-xs text-slate-500">
+                    {task.dueDate && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" /> {formatDate(task.dueDate)}
+                      </span>
+                    )}
+                    {task.feedbacks?.length > 0 && (
+                      <span className="flex items-center gap-1 text-indigo-600">
+                        <MessageSquare className="w-3.5 h-3.5" /> {task.feedbacks.length}
+                      </span>
+                    )}
+                    {task.childTasks?.length > 0 && (
+                      <span className="flex items-center gap-1 text-emerald-600">
+                        <GitBranch className="w-3.5 h-3.5" /> {task.childTasks.length}
+                      </span>
+                    )}
+                    {hasContent && (
+                      <button
+                        onClick={() => setExpandedId(isExpanded ? null : task.id)}
+                        className="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title={isExpanded ? "Collapse" : "Show details"}
                       >
-                        <FolderKanban className="w-3 h-3" /> {task.project.name}
-                      </Link>
-                    )}
-                    {task.milestone && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-                        <Target className="w-3 h-3" /> {task.milestone.title}
-                      </span>
-                    )}
-                    {task.planningStep && (
-                      <span className="inline-flex items-center gap-1 text-xs text-slate-400">
-                        <Layers className="w-3 h-3" /> {task.planningStep.title}
-                      </span>
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3 flex-shrink-0 text-xs text-slate-500">
-                  {task.dueDate && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" /> {formatDate(task.dueDate)}
-                    </span>
-                  )}
-                  {task.feedbacks?.length > 0 && (
-                    <span className="flex items-center gap-1 text-indigo-600">
-                      <MessageSquare className="w-3.5 h-3.5" /> {task.feedbacks.length}
-                    </span>
-                  )}
-                  {task.childTasks?.length > 0 && (
-                    <span className="flex items-center gap-1 text-emerald-600">
-                      <GitBranch className="w-3.5 h-3.5" /> {task.childTasks.length}
-                    </span>
-                  )}
-                </div>
+
+                {/* Expandable content details */}
+                {isExpanded && hasContent && (
+                  <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                    {task.description && (
+                      <div className="text-sm">
+                        <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Description</span>
+                        <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap mt-1">{task.description}</p>
+                      </div>
+                    )}
+                    {task.objectives && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <Lightbulb className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Objectives</span>
+                          <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{task.objectives}</p>
+                        </div>
+                      </div>
+                    )}
+                    {task.deliverables && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <Package className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0">
+                          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Deliverables</span>
+                          <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">{task.deliverables}</p>
+                        </div>
+                      </div>
+                    )}
+                    {references.length > 0 && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <LinkIcon className="w-4 h-4 text-indigo-500 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">References</span>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {references.map((ref, idx) => (
+                              <a
+                                key={idx}
+                                href={ref.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                              >
+                                {ref.label}
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    {linkedMeetings.length > 0 && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <Video className="w-4 h-4 text-sky-500 flex-shrink-0 mt-0.5" />
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Meetings</span>
+                          <div className="flex flex-col gap-1.5 mt-1">
+                            {linkedMeetings.map((m) => (
+                              <div
+                                key={m.id}
+                                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sky-50/50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/30"
+                              >
+                                <ClipboardList className="w-3.5 h-3.5 text-sky-500 flex-shrink-0" />
+                                <span className="text-sm text-slate-700 dark:text-slate-300 flex-1 truncate">{m.title}</span>
+                                {m.phase && m.phase !== "REGULAR" && <Badge value={m.phase} />}
+                                <Badge value={m.status} />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 p-12 text-center">

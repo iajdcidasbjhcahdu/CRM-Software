@@ -715,6 +715,7 @@ export default function ProjectDetailContent({ initialProject, initialMeetings =
         meetings={initialMeetings}
         entityType="project"
         entityId={project.id}
+        projectTasks={tasks}
         showToast={showToast}
       />
 

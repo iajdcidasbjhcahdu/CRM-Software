@@ -3,11 +3,20 @@ import { z } from "zod";
 const statuses = ["TODO", "IN_PROGRESS", "IN_REVIEW", "COMPLETED", "REVIEWED"];
 const priorities = ["LOW", "MEDIUM", "HIGH", "URGENT"];
 
+const referenceSchema = z.object({
+  label: z.string().min(1).max(200),
+  url: z.string().min(1).max(2000),
+});
+
 export const createTaskSchema = z.object({
   body: z.object({
     projectId: z.string().min(1, "Project ID is required"),
     title: z.string().min(1, "Title is required").max(200),
     description: z.string().max(5000).optional().nullable(),
+    // Content creation fields
+    objectives: z.string().max(5000).optional().nullable(),
+    deliverables: z.string().max(5000).optional().nullable(),
+    references: z.array(referenceSchema).optional().nullable(),
     status: z.enum(statuses).optional(),
     priority: z.enum(priorities).optional(),
     dueDate: z.string().optional().nullable(),
@@ -23,6 +32,10 @@ export const updateTaskSchema = z.object({
   body: z.object({
     title: z.string().min(1).max(200).optional(),
     description: z.string().max(5000).optional().nullable(),
+    // Content creation fields
+    objectives: z.string().max(5000).optional().nullable(),
+    deliverables: z.string().max(5000).optional().nullable(),
+    references: z.array(referenceSchema).optional().nullable(),
     status: z.enum(statuses).optional(),
     priority: z.enum(priorities).optional(),
     position: z.coerce.number().int().min(0).optional(),

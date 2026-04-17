@@ -692,6 +692,14 @@ export async function deleteMeetingAPI(id, accessToken) {
   return request(`/api/meetings/${id}`, { method: "DELETE", token: accessToken });
 }
 
+export async function completePostProductionMeetingAPI(id, data, accessToken) {
+  return request(`/api/meetings/${id}/complete-post-production`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    token: accessToken,
+  });
+}
+
 /* ───────── Follow-Ups ───────── */
 
 export async function getFollowUpsAPI(params, accessToken) {

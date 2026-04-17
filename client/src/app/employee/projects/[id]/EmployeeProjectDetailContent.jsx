@@ -17,6 +17,8 @@ import {
   LayoutList,
   Kanban,
   Users,
+  ClipboardList,
+  ListChecks,
 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import PlanningSection from "@/components/project/PlanningSection";
@@ -211,25 +213,66 @@ export default function EmployeeProjectDetailContent({
           <div className="space-y-3">
             {initialMeetings.map((meeting) => {
               const ModeIcon = modeIcons[meeting.mode] || Video;
+              const phase = meeting.phase || "REGULAR";
+              const requirements = Array.isArray(meeting.requirements) ? meeting.requirements : [];
+              const linkedTasks = (meeting.meetingTasks || []).map((mt) => mt.task).filter(Boolean);
+
               return (
-                <div key={meeting.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-900">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center flex-shrink-0">
-                      <ModeIcon className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate">{meeting.title}</h4>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Badge value={meeting.status} />
-                        {meeting.duration && (
-                          <span className="flex items-center gap-1 text-xs text-slate-400">
-                            <Clock className="w-3 h-3" /> {meeting.duration} min
-                          </span>
-                        )}
+                <div key={meeting.id} className="rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 overflow-hidden">
+                  <div className="flex items-center justify-between p-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center flex-shrink-0">
+                        <ModeIcon className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="text-sm font-medium text-slate-900 dark:text-slate-50 truncate">{meeting.title}</h4>
+                          {phase !== "REGULAR" && <Badge value={phase} />}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <Badge value={meeting.status} />
+                          {meeting.duration && (
+                            <span className="flex items-center gap-1 text-xs text-slate-400">
+                              <Clock className="w-3 h-3" /> {meeting.duration} min
+                            </span>
+                          )}
+                          {linkedTasks.length > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-indigo-500">
+                              <ListChecks className="w-3 h-3" /> {linkedTasks.length} task{linkedTasks.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                          {requirements.length > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-sky-500">
+                              <ClipboardList className="w-3 h-3" /> {requirements.length} req{requirements.length !== 1 ? "s" : ""}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
+                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">{formatDateTime(meeting.scheduledAt)}</p>
                   </div>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 flex-shrink-0">{formatDateTime(meeting.scheduledAt)}</p>
+
+                  {/* Requirements (esp. pre-production briefings the employee should read) */}
+                  {requirements.length > 0 && (
+                    <div className="px-3 pb-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+                      <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mb-2 flex items-center gap-1">
+                        <ClipboardList className="w-3 h-3 text-sky-500" /> Client Requirements
+                      </p>
+                      <div className="space-y-1.5">
+                        {requirements.map((req, idx) => (
+                          <div key={idx} className="p-2 rounded-lg bg-sky-50/50 dark:bg-sky-900/10 border border-sky-100 dark:border-sky-900/30">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">{req.title}</p>
+                              {req.priority && <Badge value={req.priority} />}
+                            </div>
+                            {req.description && (
+                              <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5 whitespace-pre-wrap">{req.description}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
