@@ -736,3 +736,69 @@ export async function getAccountDashboardStats(userId) {
     projectsList,
   };
 }
+
+/**
+ * HR / OWNER / ADMIN attendance-focused dashboard.
+ * Shows today's attendance snapshot, pending leaves, upcoming holidays.
+ */
+export async function getHrDashboardStats() {
+  const now = new Date();
+  const todayUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const in30Days = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 30));
+
+  const [
+    totalActiveUsers,
+    todayAttendance,
+    pendingLeaveCount,
+    recentLeaveRequests,
+    upcomingHolidays,
+  ] = await Promise.all([
+    prisma.user.count({ where: { status: "ACTIVE", role: { not: "CLIENT" } } }),
+    prisma.attendance.findMany({
+      where: { date: todayUtc },
+      select: { id: true, status: true, userId: true },
+    }),
+    prisma.leaveRequest.count({ where: { status: "PENDING" } }),
+    prisma.leaveRequest.findMany({
+      where: { status: "PENDING" },
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, firstName: true, lastName: true, avatar: true, role: true } },
+        leaveType: { select: { id: true, name: true, color: true } },
+      },
+    }),
+    prisma.holiday.findMany({
+      where: { date: { gte: todayUtc, lte: in30Days } },
+      take: 5,
+      orderBy: { date: "asc" },
+    }),
+  ]);
+
+  // Group today's attendance by status
+  const byStatus = todayAttendance.reduce((acc, a) => {
+    acc[a.status] = (acc[a.status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const presentCount = (byStatus.PRESENT || 0) + (byStatus.WORK_FROM_HOME || 0) + (byStatus.ON_DUTY || 0);
+  const halfDayCount = (byStatus.HALF_DAY_FIRST || 0) + (byStatus.HALF_DAY_SECOND || 0);
+  const onLeaveCount = byStatus.ON_LEAVE || 0;
+  const absentCount = byStatus.ABSENT || 0;
+  const notMarkedCount = Math.max(totalActiveUsers - todayAttendance.length, 0);
+
+  return {
+    totalActiveUsers,
+    today: {
+      present: presentCount,
+      halfDay: halfDayCount,
+      onLeave: onLeaveCount,
+      absent: absentCount,
+      notMarked: notMarkedCount,
+      byStatus,
+    },
+    pendingLeaveCount,
+    recentLeaveRequests,
+    upcomingHolidays,
+  };
+}

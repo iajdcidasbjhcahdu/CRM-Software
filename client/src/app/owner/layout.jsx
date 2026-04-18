@@ -85,6 +85,27 @@ const navItems = [
       { name: "Add Sample", href: "/owner/samples/create" },
     ],
   },
+  {
+    name: "Attendance",
+    href: "/owner/attendance",
+    icon: "Clock",
+    children: [
+      { name: "Daily Sheet", href: "/owner/attendance" },
+      { name: "My Attendance", href: "/owner/my-attendance" },
+      { name: "Holidays", href: "/owner/holidays" },
+    ],
+  },
+  {
+    name: "Leave",
+    href: "/owner/leave-requests",
+    icon: "FileText",
+    children: [
+      { name: "Apply Leave", href: "/owner/my-leaves" },
+      { name: "Requests", href: "/owner/leave-requests" },
+      { name: "Types", href: "/owner/leave-types" },
+      { name: "Balances", href: "/owner/leave-balances" },
+    ],
+  },
   { name: "Settings", href: "/owner/settings", icon: "Settings" },
 ];
 

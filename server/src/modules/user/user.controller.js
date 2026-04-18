@@ -63,6 +63,15 @@ class UserController {
     cache.del(`user:${req.params.id}`);
     return ok(res, "User deleted successfully");
   });
+
+  /**
+   * GET /api/users/directory
+   * Minimal read-only directory for HR/OWNER/ADMIN — active non-CLIENT users.
+   */
+  listDirectory = catchAsync(async (_req, res) => {
+    const users = await userService.listDirectory();
+    return ok(res, "User directory retrieved", users);
+  });
 }
 
 export default new UserController();

@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { getDashboardStatsAPI, getClientDashboardStatsAPI, getEmployeeDashboardStatsAPI, getSalesDashboardStatsAPI, getAccountDashboardStatsAPI } from "@/lib/api";
+import { getDashboardStatsAPI, getClientDashboardStatsAPI, getEmployeeDashboardStatsAPI, getSalesDashboardStatsAPI, getAccountDashboardStatsAPI, getHrDashboardStatsAPI } from "@/lib/api";
 
 /**
  * Fetches dashboard statistics from the backend.
@@ -97,6 +97,24 @@ export async function getAccountDashboardStats() {
 
   try {
     const res = await getAccountDashboardStatsAPI(accessToken);
+    if (res.success) return res.data;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetches HR/OWNER/ADMIN attendance-focused dashboard statistics.
+ */
+export async function getHrDashboardStats() {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get("accessToken")?.value;
+
+  if (!accessToken) return null;
+
+  try {
+    const res = await getHrDashboardStatsAPI(accessToken);
     if (res.success) return res.data;
     return null;
   } catch {

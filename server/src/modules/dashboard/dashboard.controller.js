@@ -1,4 +1,4 @@
-import { getDashboardStats, getClientDashboardStats, getEmployeeDashboardStats, getSalesDashboardStats, getAccountDashboardStats } from "./dashboard.service.js";
+import { getDashboardStats, getClientDashboardStats, getEmployeeDashboardStats, getSalesDashboardStats, getAccountDashboardStats, getHrDashboardStats } from "./dashboard.service.js";
 import { ok } from "../../utils/apiResponse.js";
 import prisma from "../../utils/prisma.js";
 import { getUserProjectIds } from "../../utils/projectPermission.js";
@@ -96,6 +96,19 @@ export async function getAccountStats(req, res, next) {
   try {
     const stats = await getAccountDashboardStats(req.user.id);
     return ok(res, "Account manager dashboard statistics fetched", stats);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * GET /api/dashboard/hr-stats
+ * Returns attendance-focused stats for HR/OWNER/ADMIN.
+ */
+export async function getHrStats(_req, res, next) {
+  try {
+    const stats = await getHrDashboardStats();
+    return ok(res, "HR dashboard statistics fetched", stats);
   } catch (error) {
     next(error);
   }

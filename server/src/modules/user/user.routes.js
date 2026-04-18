@@ -13,8 +13,18 @@ import {
 
 const router = Router();
 
-// All routes require auth + OWNER role
+// All routes require auth
 router.use(authenticate);
+
+// Minimal user directory for HR/OWNER/ADMIN (read-only, no sensitive fields).
+// Declared BEFORE the OWNER-only router.use() below so it keeps its own auth scope.
+router.get(
+  "/directory",
+  authorize("OWNER", "ADMIN", "HR"),
+  userController.listDirectory
+);
+
+// All remaining routes are OWNER-only
 router.use(authorize("OWNER"));
 
 router.post("/", validate(createUserSchema), userController.createUser);

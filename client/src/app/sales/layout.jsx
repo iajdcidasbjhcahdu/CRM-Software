@@ -43,6 +43,8 @@ const navItems = [
   { name: "Follow-ups", href: "/sales/follow-ups", icon: "PhoneForwarded" },
   { name: "Clients", href: "/sales/clients", icon: "Building2" },
   { name: "Projects", href: "/sales/projects", icon: "FolderKanban" },
+  { name: "My Attendance", href: "/sales/my-attendance", icon: "Clock" },
+  { name: "Apply Leave", href: "/sales/my-leaves", icon: "FileText" },
 ];
 
 export default async function SalesLayout({ children }) {

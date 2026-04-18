@@ -35,6 +35,9 @@ import planningStepRoutes from "./modules/planning-step/planning-step.routes.js"
 import taskRoutes from "./modules/task/task.routes.js";
 import milestoneRoutes from "./modules/milestone/milestone.routes.js";
 import commentRoutes from "./modules/comment/comment.routes.js";
+import attendanceRoutes from "./modules/attendance/attendance.routes.js";
+import leaveRoutes from "./modules/leave/leave.routes.js";
+import holidayRoutes from "./modules/holiday/holiday.routes.js";
 
 const app = express();
 
@@ -113,6 +116,9 @@ app.use("/api/planning-steps", planningStepRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/milestones", milestoneRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/leave", leaveRoutes);
+app.use("/api/holidays", holidayRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

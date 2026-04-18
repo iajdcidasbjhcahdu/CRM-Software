@@ -996,4 +996,128 @@ export async function apiDelete(endpoint, accessToken) {
   return request(endpoint, { method: "DELETE", token: accessToken });
 }
 
+/* ───────── Attendance ───────── */
+
+export async function checkInAPI(data, accessToken) {
+  return request("/api/attendance/check-in", { method: "POST", body: JSON.stringify(data || {}), token: accessToken });
+}
+
+export async function checkOutAPI(data, accessToken) {
+  return request("/api/attendance/check-out", { method: "POST", body: JSON.stringify(data || {}), token: accessToken });
+}
+
+export async function getTodayAttendanceAPI(accessToken) {
+  return request("/api/attendance/today", { method: "GET", token: accessToken });
+}
+
+export async function getMyAttendanceAPI(params, accessToken) {
+  const q = params ? new URLSearchParams(params).toString() : "";
+  return request(`/api/attendance/my${q ? `?${q}` : ""}`, { method: "GET", token: accessToken });
+}
+
+export async function getDailyAttendanceSheetAPI(date, accessToken) {
+  return request(`/api/attendance/daily?date=${encodeURIComponent(date)}`, { method: "GET", token: accessToken });
+}
+
+export async function getUserAttendanceAPI(userId, params, accessToken) {
+  const q = params ? new URLSearchParams(params).toString() : "";
+  return request(`/api/attendance/user/${userId}${q ? `?${q}` : ""}`, { method: "GET", token: accessToken });
+}
+
+export async function manualMarkAttendanceAPI(data, accessToken) {
+  return request("/api/attendance", { method: "POST", body: JSON.stringify(data), token: accessToken });
+}
+
+export async function updateAttendanceAPI(id, data, accessToken) {
+  return request(`/api/attendance/${id}`, { method: "PATCH", body: JSON.stringify(data), token: accessToken });
+}
+
+export async function deleteAttendanceAPI(id, accessToken) {
+  return request(`/api/attendance/${id}`, { method: "DELETE", token: accessToken });
+}
+
+/* ───────── Leave ───────── */
+
+// Types
+export async function listLeaveTypesAPI(accessToken) {
+  return request("/api/leave/types", { method: "GET", token: accessToken });
+}
+export async function createLeaveTypeAPI(data, accessToken) {
+  return request("/api/leave/types", { method: "POST", body: JSON.stringify(data), token: accessToken });
+}
+export async function updateLeaveTypeAPI(id, data, accessToken) {
+  return request(`/api/leave/types/${id}`, { method: "PATCH", body: JSON.stringify(data), token: accessToken });
+}
+export async function deleteLeaveTypeAPI(id, accessToken) {
+  return request(`/api/leave/types/${id}`, { method: "DELETE", token: accessToken });
+}
+
+// Balances
+export async function getMyLeaveBalancesAPI(year, accessToken) {
+  const q = year ? `?year=${year}` : "";
+  return request(`/api/leave/balances/my${q}`, { method: "GET", token: accessToken });
+}
+export async function getUserLeaveBalancesAPI(userId, year, accessToken) {
+  const q = year ? `?year=${year}` : "";
+  return request(`/api/leave/balances/user/${userId}${q}`, { method: "GET", token: accessToken });
+}
+export async function updateLeaveBalanceAPI(id, data, accessToken) {
+  return request(`/api/leave/balances/${id}`, { method: "PATCH", body: JSON.stringify(data), token: accessToken });
+}
+export async function seedLeaveBalancesAPI(year, accessToken) {
+  return request(`/api/leave/balances/seed?year=${year}`, { method: "POST", token: accessToken });
+}
+
+// Requests
+export async function createLeaveRequestAPI(data, accessToken) {
+  return request("/api/leave/requests", { method: "POST", body: JSON.stringify(data), token: accessToken });
+}
+export async function getMyLeaveRequestsAPI(accessToken) {
+  return request("/api/leave/requests/my", { method: "GET", token: accessToken });
+}
+export async function listLeaveRequestsAPI(params, accessToken) {
+  const q = params ? new URLSearchParams(params).toString() : "";
+  return request(`/api/leave/requests${q ? `?${q}` : ""}`, { method: "GET", token: accessToken });
+}
+export async function getLeaveRequestAPI(id, accessToken) {
+  return request(`/api/leave/requests/${id}`, { method: "GET", token: accessToken });
+}
+export async function approveLeaveRequestAPI(id, data, accessToken) {
+  return request(`/api/leave/requests/${id}/approve`, { method: "PATCH", body: JSON.stringify(data || {}), token: accessToken });
+}
+export async function rejectLeaveRequestAPI(id, data, accessToken) {
+  return request(`/api/leave/requests/${id}/reject`, { method: "PATCH", body: JSON.stringify(data || {}), token: accessToken });
+}
+export async function cancelLeaveRequestAPI(id, accessToken) {
+  return request(`/api/leave/requests/${id}/cancel`, { method: "PATCH", token: accessToken });
+}
+
+/* ───────── Holidays ───────── */
+
+export async function listHolidaysAPI(year, accessToken) {
+  const q = year ? `?year=${year}` : "";
+  return request(`/api/holidays${q}`, { method: "GET", token: accessToken });
+}
+export async function createHolidayAPI(data, accessToken) {
+  return request("/api/holidays", { method: "POST", body: JSON.stringify(data), token: accessToken });
+}
+export async function updateHolidayAPI(id, data, accessToken) {
+  return request(`/api/holidays/${id}`, { method: "PATCH", body: JSON.stringify(data), token: accessToken });
+}
+export async function deleteHolidayAPI(id, accessToken) {
+  return request(`/api/holidays/${id}`, { method: "DELETE", token: accessToken });
+}
+
+/* ───────── User Directory (HR/OWNER/ADMIN) ───────── */
+
+export async function getUserDirectoryAPI(accessToken) {
+  return request("/api/users/directory", { method: "GET", token: accessToken });
+}
+
+/* ───────── HR Dashboard Stats ───────── */
+
+export async function getHrDashboardStatsAPI(accessToken) {
+  return request("/api/dashboard/hr-stats", { method: "GET", token: accessToken });
+}
+
 export default request;

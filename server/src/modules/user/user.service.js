@@ -68,6 +68,26 @@ class UserService {
   }
 
   /**
+   * Minimal read-only directory for HR/OWNER/ADMIN.
+   * Active non-CLIENT users, safe fields only.
+   */
+  async listDirectory() {
+    return prisma.user.findMany({
+      where: { status: "ACTIVE", role: { not: "CLIENT" } },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        avatar: true,
+        role: true,
+        status: true,
+      },
+      orderBy: [{ role: "asc" }, { firstName: "asc" }],
+    });
+  }
+
+  /**
    * List users with pagination, filters, search, sort
    */
   async listUsers({ page, limit, role, status, search, sortBy, sortOrder }) {

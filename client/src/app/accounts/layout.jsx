@@ -29,6 +29,8 @@ const navItems = [
   { name: "Documents", href: "/accounts/documents", icon: "FileText" },
   { name: "Meetings", href: "/accounts/meetings", icon: "Calendar" },
   { name: "Teams", href: "/accounts/teams", icon: "Users" },
+  { name: "My Attendance", href: "/accounts/my-attendance", icon: "Clock" },
+  { name: "Apply Leave", href: "/accounts/my-leaves", icon: "FileText" },
 ];
 
 export default async function AccountsLayout({ children }) {

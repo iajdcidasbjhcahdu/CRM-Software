@@ -10,6 +10,7 @@ import {
   deleteUserAPI,
   resetPasswordAPI,
   getClientsDropdownAPI,
+  getUserDirectoryAPI,
 } from "@/lib/api";
 
 // ─── Helpers ─────────────────────────────────────────────
@@ -136,5 +137,20 @@ export async function getClientsDropdown() {
     return [];
   } catch {
     return [];
+  }
+}
+
+// ─── User Directory (HR/OWNER/ADMIN) ─────────────────────
+
+export async function getUserDirectory() {
+  const token = await getToken();
+  if (!token) return { success: false, data: [] };
+
+  try {
+    const res = await getUserDirectoryAPI(token);
+    if (res.success) return { success: true, data: res.data };
+    return { success: false, data: [], error: res.message };
+  } catch (err) {
+    return { success: false, data: [], error: err.message };
   }
 }

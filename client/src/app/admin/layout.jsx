@@ -74,6 +74,27 @@ const navItems = [
       { name: "Add Sample", href: "/admin/samples/create" },
     ],
   },
+  {
+    name: "Attendance",
+    href: "/admin/attendance",
+    icon: "Clock",
+    children: [
+      { name: "Daily Sheet", href: "/admin/attendance" },
+      { name: "My Attendance", href: "/admin/my-attendance" },
+      { name: "Holidays", href: "/admin/holidays" },
+    ],
+  },
+  {
+    name: "Leave",
+    href: "/admin/leave-requests",
+    icon: "FileText",
+    children: [
+      { name: "Apply Leave", href: "/admin/my-leaves" },
+      { name: "Requests", href: "/admin/leave-requests" },
+      { name: "Types", href: "/admin/leave-types" },
+      { name: "Balances", href: "/admin/leave-balances" },
+    ],
+  },
 ];
 
 export default async function AdminLayout({ children }) {

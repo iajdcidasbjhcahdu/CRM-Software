@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authenticate from "../../middlewares/auth.middleware.js";
 import authorize from "../../middlewares/role.middleware.js";
-import { getStats, getClientStats, getEmployeeStats, getSalesStats, getAccountStats } from "./dashboard.controller.js";
+import { getStats, getClientStats, getEmployeeStats, getSalesStats, getAccountStats, getHrStats } from "./dashboard.controller.js";
 
 const router = Router();
 
@@ -19,5 +19,8 @@ router.get("/sales-stats", authenticate, authorize("SALES_MANAGER"), getSalesSta
 
 // ACCOUNT_MANAGER portal dashboard stats
 router.get("/account-stats", authenticate, authorize("ACCOUNT_MANAGER"), getAccountStats);
+
+// HR / OWNER / ADMIN attendance-focused dashboard stats
+router.get("/hr-stats", authenticate, authorize("OWNER", "ADMIN", "HR"), getHrStats);
 
 export default router;

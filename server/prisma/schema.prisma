@@ -166,6 +166,13 @@ model User {
   // Comments
   comments             Comment[]      @relation("CommentAuthor")
 
+  // Attendance & leaves
+  attendance        Attendance[]    @relation("UserAttendance")
+  markedAttendance  Attendance[]    @relation("AttendanceMarker")
+  leaveBalances     LeaveBalance[]  @relation("UserLeaveBalance")
+  leaveRequests     LeaveRequest[]  @relation("UserLeaveRequest")
+  reviewedLeaves    LeaveRequest[]  @relation("LeaveReviewer")
+
   @@index([clientId])
   @@map("users")
 }
@@ -1150,4 +1157,139 @@ model Comment {
   @@index([entityType, entityId])
   @@index([authorId])
   @@map("comments")
+}
+
+// ─── Attendance & Leave Management ───────────────────
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY_FIRST      // worked only the first half of the day
+  HALF_DAY_SECOND     // worked only the second half of the day
+  ON_LEAVE            // approved leave covers this day
+  HOLIDAY             // company-observed holiday
+  WEEKEND             // weekend off
+  WORK_FROM_HOME
+  ON_DUTY             // external work: client visit, event, travel
+}
+
+enum LeaveRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LeaveDayType {
+  FULL_DAY
+  FIRST_HALF
+  SECOND_HALF
+}
+
+model Attendance {
+  id             String           @id @default(cuid())
+  date           DateTime         @db.Date
+  userId         String           @map("user_id")
+  user           User             @relation("UserAttendance", fields: [userId], references: [id], onDelete: Cascade)
+  status         AttendanceStatus @default(PRESENT)
+  checkInAt      DateTime?        @map("check_in_at")
+  checkOutAt     DateTime?        @map("check_out_at")
+  workedMinutes  Int?             @map("worked_minutes")
+  notes          String?          @db.Text
+
+  leaveRequestId String?          @map("leave_request_id")
+  leaveRequest   LeaveRequest?    @relation(fields: [leaveRequestId], references: [id], onDelete: SetNull)
+
+  markedById     String?          @map("marked_by_id")
+  markedBy       User?            @relation("AttendanceMarker", fields: [markedById], references: [id])
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@index([status])
+  @@map("attendance")
+}
+
+model LeaveType {
+  id            String  @id @default(cuid())
+  name          String  @unique
+  code          String  @unique
+  isPaid        Boolean @default(true) @map("is_paid")
+  defaultQuota  Float?  @map("default_quota")  // null = unlimited
+  color         String?
+  isActive      Boolean @default(true) @map("is_active")
+
+  leaveBalances LeaveBalance[]
+  leaveRequests LeaveRequest[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("leave_types")
+}
+
+model LeaveBalance {
+  id          String    @id @default(cuid())
+  userId      String    @map("user_id")
+  user        User      @relation("UserLeaveBalance", fields: [userId], references: [id], onDelete: Cascade)
+  leaveTypeId String    @map("leave_type_id")
+  leaveType   LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+  year        Int
+  allocated   Float     @default(0)
+  used        Float     @default(0)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, leaveTypeId, year])
+  @@index([userId])
+  @@index([year])
+  @@map("leave_balances")
+}
+
+model LeaveRequest {
+  id           String              @id @default(cuid())
+  userId       String              @map("user_id")
+  user         User                @relation("UserLeaveRequest", fields: [userId], references: [id], onDelete: Cascade)
+  leaveTypeId  String              @map("leave_type_id")
+  leaveType    LeaveType           @relation(fields: [leaveTypeId], references: [id])
+
+  fromDate     DateTime            @db.Date @map("from_date")
+  toDate       DateTime            @db.Date @map("to_date")
+  fromDayType  LeaveDayType        @default(FULL_DAY) @map("from_day_type")
+  toDayType    LeaveDayType        @default(FULL_DAY) @map("to_day_type")
+  totalDays    Float               @map("total_days")
+  reason       String              @db.Text
+
+  status       LeaveRequestStatus  @default(PENDING)
+  reviewedById String?             @map("reviewed_by_id")
+  reviewedBy   User?               @relation("LeaveReviewer", fields: [reviewedById], references: [id])
+  reviewedAt   DateTime?           @map("reviewed_at")
+  reviewNotes  String?             @db.Text @map("review_notes")
+
+  attendance   Attendance[]        // auto-created on approval
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([fromDate])
+  @@map("leave_requests")
+}
+
+model Holiday {
+  id         String   @id @default(cuid())
+  name       String
+  date       DateTime @db.Date @unique
+  isOptional Boolean  @default(false) @map("is_optional")
+  notes      String?
+
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([date])
+  @@map("holidays")
 }
