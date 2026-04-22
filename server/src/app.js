@@ -38,6 +38,7 @@ import commentRoutes from "./modules/comment/comment.routes.js";
 import attendanceRoutes from "./modules/attendance/attendance.routes.js";
 import leaveRoutes from "./modules/leave/leave.routes.js";
 import holidayRoutes from "./modules/holiday/holiday.routes.js";
+import calendarRoutes from "./modules/calendar/calendar.routes.js";
 
 const app = express();
 
@@ -119,6 +120,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/leave", leaveRoutes);
 app.use("/api/holidays", holidayRoutes);
+app.use("/api/calendar", calendarRoutes);
 
 app.get("/pullAndDeploy", async (_req, res) => {
 

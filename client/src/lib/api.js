@@ -1121,3 +1121,15 @@ export async function getHrDashboardStatsAPI(accessToken) {
 }
 
 export default request;
+
+// --- Calendar ---
+export async function getCalendarEventsAPI(accessToken, start, end) {
+  let query = "";
+  if (start && end) {
+    query = `?start=${start}&end=${end}`;
+  }
+  return request(`/api/calendar/events${query}`, {
+    method: "GET",
+    token: accessToken,
+  });
+}
