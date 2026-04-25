@@ -1,4 +1,4 @@
-# TaskGo Agency -- CRM Platform
+# TaskGo Agency - CRM Platform
 
 A full-stack Customer Relationship Management platform built for agencies and service-based businesses. TaskGo Agency provides end-to-end lifecycle management -- from lead acquisition through deal negotiation to client onboarding and project delivery -- with role-based access control for every organisational function.
 
